@@ -10,6 +10,8 @@
   };
   const fromLabel = (race) => `From ${euro(fromPrice(race))}`;
   const ticketOf = (race, id) => (race?.tickets || []).find((ticket) => ticket.id === id);
+  const esc = (value) =>
+    String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   const regions = [
     { id: "all", label: "All" },
     { id: "americas", label: "Americas" },
@@ -151,6 +153,7 @@
   }
 
   let cart = loadCart();
+  let placedName = "";
 
   document.getElementById("header").innerHTML = `
     <a class="skip" href="#contenu">Skip to content</a>
@@ -185,10 +188,10 @@
           <button class="text-btn" type="button" data-action="safe">Shop safe</button>
         </nav>
         <div class="nav-tools">
-          <button class="icon-account" type="button" data-action="open-cart" aria-label="Basket">
+          <a class="icon-account" href="basket.html" aria-label="Basket" ${page === "basket" ? 'aria-current="page"' : ""}>
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 19.2c1.4-3 3.8-4.4 7-4.4s5.6 1.4 7 4.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
             <span class="cart-badge" data-cart-count>0</span>
-          </button>
+          </a>
         </div>
       </div>
     </div>
@@ -266,14 +269,6 @@
         </div>
       </div>
     </div>
-    <aside class="drawer hidden" id="cart" aria-hidden="true" aria-labelledby="cart-title">
-      <header><h2 id="cart-title">Basket</h2><button class="icon-btn" type="button" data-action="close-cart" aria-label="Close basket">×</button></header>
-      <div class="drawer-body" data-cart-body></div>
-      <footer>
-        <div class="total"><span>Total</span><span data-cart-total>${euro(0)}</span></div>
-        <button class="button" type="button" data-action="checkout">Checkout</button>
-      </footer>
-    </aside>
     <div class="backdrop hidden" data-modal="hosp-pack">
       <div class="modal modal-packs" role="dialog" aria-modal="true" aria-labelledby="packs-title">
         <div class="pack-hero">
@@ -286,22 +281,6 @@
           </div>
         </div>
         <div class="sheet" data-packs-list></div>
-      </div>
-    </div>
-    <div class="backdrop hidden" data-modal="checkout">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="check-title">
-        <header><h2 id="check-title">Checkout</h2><button class="icon-btn" type="button" data-action="close-modal" aria-label="Close">×</button></header>
-        <form id="checkout-form">
-          <p class="empty">Enter the name and email for this order. Pay only on this page — never by message.</p>
-          <label>Name<input name="name" type="text" required autocomplete="name"></label>
-          <label>Email<input name="email" type="email" required autocomplete="email"></label>
-          <button class="button" type="submit">Place order</button>
-        </form>
-        <div class="success hidden" data-check-success>
-          <h3 style="margin:0">Order confirmed</h3>
-          <p>Your tickets are reserved. A confirmation will be sent to your email.</p>
-          <button class="button" type="button" data-action="close-modal">Back to the store</button>
-        </div>
       </div>
     </div>
     <div class="toast hidden" data-toast role="status"></div>
@@ -348,49 +327,110 @@
     document.querySelectorAll(".backdrop").forEach((node) => node.classList.add("hidden"));
   }
 
-  function openCart() {
-    document.getElementById("cart").classList.remove("hidden");
-    document.getElementById("cart").setAttribute("aria-hidden", "false");
-  }
-
-  function closeCart() {
-    document.getElementById("cart").classList.add("hidden");
-    document.getElementById("cart").setAttribute("aria-hidden", "true");
-  }
-
   function renderCart() {
+    const tickets = cartCount();
     document.querySelectorAll("[data-cart-count]").forEach((node) => {
-      node.textContent = String(cartCount());
+      node.textContent = String(tickets);
     });
-    const body = document.querySelector("[data-cart-body]");
-    document.querySelector("[data-cart-total]").textContent = cartTotalLabel();
+    const root = document.getElementById("basket-root");
+    if (!root) return;
     if (!cart.length) {
-      body.innerHTML = `<p class="empty">The basket is empty. Book a ticket on a race that is on sale.</p>`;
+      root.innerHTML = placedName ? basketDone(placedName) : basketEmpty();
       return;
     }
-    body.innerHTML = cart
-      .map((item) => {
-        const race = races.find((entry) => entry.id === item.raceId);
-        const ticket = ticketOf(race, item.tierId);
-        if (!race || !ticket) return "";
-        return `
-          <article class="cart-line">
-            <header>
-              <strong>${race.country}</strong>
-              <button class="icon-btn" type="button" data-action="remove" data-key="${item.raceId}:${item.tierId}" aria-label="Remove">×</button>
-            </header>
-            <span>${ticket.name} · ${race.dates}</span>
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <span class="stepper">
-                <button type="button" data-action="cart-qty" data-key="${item.raceId}:${item.tierId}" data-dir="-1" aria-label="Decrease">−</button>
-                <output>${item.qty}</output>
-                <button type="button" data-action="cart-qty" data-key="${item.raceId}:${item.tierId}" data-dir="1" aria-label="Increase">+</button>
-              </span>
-              <strong>${euro(ticket.price * item.qty)}</strong>
-            </div>
-          </article>`;
-      })
-      .join("");
+    placedName = "";
+    const keptName = document.querySelector("#checkout-form [name=name]")?.value || "";
+    const keptEmail = document.querySelector("#checkout-form [name=email]")?.value || "";
+    const noun = tickets === 1 ? "ticket" : "tickets";
+    root.innerHTML = `
+      <div class="basket-grid">
+        <div class="basket-main">
+          <div class="basket-head">
+            <h2 class="basket-count">${tickets} ${noun} in your basket</h2>
+            <button class="basket-clear" type="button" data-action="clear-cart">Empty basket</button>
+          </div>
+          ${cart.map(basketLine).join("")}
+        </div>
+        <aside class="basket-recap">
+          <p class="basket-kicker">Ready to order</p>
+          <h2>Order summary</h2>
+          <p class="basket-note">${tickets} ${noun} · weekend price</p>
+          <dl class="basket-rows">
+            <div><dt>Subtotal</dt><dd>${cartTotalLabel()}</dd></div>
+            <div><dt>Booking fees</dt><dd class="basket-off">Included</dd></div>
+            <div class="basket-total"><dt>Total</dt><dd>${cartTotalLabel()}</dd></div>
+          </dl>
+          <form id="checkout-form">
+            <label>Name<input name="name" type="text" required autocomplete="name" maxlength="80" value="${esc(keptName)}"></label>
+            <label>Email<input name="email" type="email" required autocomplete="email" maxlength="120" value="${esc(keptEmail)}"></label>
+            <button class="button" type="submit">Place order</button>
+          </form>
+          <a class="basket-continue" href="index.html#calendar">Continue shopping</a>
+          <ul class="basket-guarantees">
+            <li>Name and email only. No card on this page.</li>
+            <li>A confirmation is sent to your email.</li>
+            <li>Tickets in one line stay in the same category.</li>
+          </ul>
+        </aside>
+      </div>`;
+  }
+
+  function basketLine(item) {
+    const race = races.find((entry) => entry.id === item.raceId);
+    const ticket = ticketOf(race, item.tierId);
+    if (!race || !ticket) return "";
+    const flag = flags[race.country] || "bahrain.svg";
+    const photo = photos[race.country] || "bahrain.webp";
+    const key = `${item.raceId}:${item.tierId}`;
+    return `
+      <article class="basket-line">
+        <a class="basket-thumb" href="billets.html?course=${race.id}" aria-label="${esc(race.country)}, ${esc(ticket.name)}">
+          <img src="assets/races/${photo}?v=cards1" alt="" width="96" height="96">
+        </a>
+        <div class="basket-copy">
+          <h3 class="basket-title"><img src="assets/flags/${flag}" alt="" width="28" height="18">${esc(race.country)}</h3>
+          <p class="basket-meta">${esc(race.dates)}</p>
+          <p class="basket-venue">${esc(race.circuit)}</p>
+          <div class="basket-facts">
+            <span>${esc(ticket.name)}</span>
+            <span>${euro(ticket.price)} each</span>
+          </div>
+        </div>
+        <div class="basket-actions">
+          <span class="stepper" aria-label="Quantity">
+            <button type="button" data-action="cart-qty" data-key="${key}" data-dir="-1" aria-label="Decrease" ${item.qty <= 1 ? "disabled" : ""}>−</button>
+            <output>${item.qty}</output>
+            <button type="button" data-action="cart-qty" data-key="${key}" data-dir="1" aria-label="Increase" ${item.qty >= 8 ? "disabled" : ""}>+</button>
+          </span>
+          <strong class="basket-line-total">${euro(ticket.price * item.qty)}</strong>
+          <button class="basket-remove" type="button" data-action="remove" data-key="${key}" aria-label="Remove">×</button>
+        </div>
+      </article>`;
+  }
+
+  function basketEmpty() {
+    return `
+      <div class="basket-empty">
+        <div class="basket-empty-mark" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M6 7h15l-1.4 8.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.6L5.2 4H3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1.3" fill="currentColor"/><circle cx="18" cy="20" r="1.3" fill="currentColor"/></svg>
+        </div>
+        <h2>Your basket is empty</h2>
+        <p>Pick a Grand Prix and a category. Tickets you add stay together until you check out.</p>
+        <div class="basket-empty-actions">
+          <a class="button" href="index.html#calendar">See the calendar</a>
+          <a class="basket-secondary" href="hospitality.html">Hospitality</a>
+        </div>
+      </div>`;
+  }
+
+  function basketDone(name) {
+    return `
+      <div class="basket-empty">
+        <div class="basket-empty-mark" aria-hidden="true">✓</div>
+        <h2>Order confirmed</h2>
+        <p>Thanks, ${esc(name)}. Your tickets are reserved. A confirmation will be sent to your email.</p>
+        <a class="button" href="index.html">Back to the store</a>
+      </div>`;
   }
 
   function addToCart(raceId, tierId, amount) {
@@ -717,8 +757,6 @@
       document.getElementById("nav").classList.remove("open");
       document.querySelector(".menu-toggle")?.setAttribute("aria-expanded", "false");
     }
-    if (action === "open-cart") openCart();
-    if (action === "close-cart") closeCart();
     if (action === "close-modal") closeModals();
     if (action === "safe") openModal("safe");
     if (action === "contact") openModal("contact");
@@ -772,7 +810,13 @@
     if (action === "book") {
       pickSpot(button.dataset.tier);
       addToCart(button.dataset.race, button.dataset.tier, 1);
-      openCart();
+      location.href = "basket.html";
+    }
+
+    if (action === "clear-cart") {
+      placedName = "";
+      cart = [];
+      saveCart();
     }
 
     if (action === "remove") {
@@ -785,18 +829,10 @@
       const [raceId, tierId] = button.dataset.key.split(":");
       const item = cart.find((entry) => entry.raceId === raceId && entry.tierId === tierId);
       if (!item) return;
-      item.qty += Number(button.dataset.dir);
-      if (item.qty <= 0) cart = cart.filter((entry) => entry !== item);
+      const next = item.qty + Number(button.dataset.dir);
+      if (next < 1 || next > 8) return;
+      item.qty = next;
       saveCart();
-    }
-
-    if (action === "checkout") {
-      if (!cart.length) {
-        toast("Add a ticket before checkout.");
-        return;
-      }
-      closeCart();
-      openModal("checkout");
     }
 
     if (action === "hosp-filter") {
@@ -819,12 +855,14 @@
     });
   });
 
-  document.getElementById("checkout-form").addEventListener("submit", (event) => {
+  document.addEventListener("submit", (event) => {
+    if (event.target?.id !== "checkout-form") return;
     event.preventDefault();
+    if (!cart.length) return;
+    placedName = String(new FormData(event.target).get("name") || "").trim();
     cart = [];
-    saveCart();
-    event.currentTarget.classList.add("hidden");
-    document.querySelector("[data-check-success]").classList.remove("hidden");
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    renderCart();
   });
 
   document.getElementById("wait-form").addEventListener("submit", (event) => {
@@ -848,10 +886,7 @@
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      closeCart();
-      closeModals();
-    }
+    if (event.key === "Escape") closeModals();
   });
 
   const editions = {
