@@ -34,13 +34,6 @@ async function bodyOf(req) {
   return JSON.parse(raw);
 }
 
-function splitName(value) {
-  const parts = String(value || "").trim().split(/\s+/).filter(Boolean);
-  const first = (parts[0] || "Guest").slice(0, 50);
-  const last = (parts.slice(1).join(" ") || first).slice(0, 50);
-  return { first, last };
-}
-
 async function wc(pathname, init) {
   if (!WC_URL || !WC_KEY || !WC_SECRET) {
     throw new Error("WooCommerce is not configured.");
@@ -61,44 +54,77 @@ async function wc(pathname, init) {
   return text ? JSON.parse(text) : {};
 }
 
-async function byteqsSession(order, lines) {
+async function byteqsSession(lines, order) {
   if (!BYTEQS_SECRET) throw new Error("BYTEQS_SECRET_KEY is missing.");
-  const reference = `F1-${order.id}`;
+  const reference = order ? `F1-${order.id}` : `F1-DIRECT-${Date.now()}`;
+  const payload = {
+    successUrl: `${SITE}/basket.html?paid=1`,
+    cancelUrl: `${SITE}/basket.html`,
+    currency: "EUR",
+    clientReferenceId: reference,
+    metadata: { reference, ...(order ? { wooId: String(order.id) } : {}) },
+    lineItems: lines.map((line) => ({
+      name: line.name.slice(0, 180),
+      amountInCents: line.amountInCents,
+      quantity: line.qty,
+    })),
+  };
   const res = await fetch(`${BYTEQS_ORIGIN}/api/hosted-checkout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${BYTEQS_SECRET}`,
     },
-    body: JSON.stringify({
-      successUrl: `${SITE}/basket.html?paid=1`,
-      cancelUrl: `${SITE}/basket.html`,
-      currency: order.currency || "EUR",
-      clientReferenceId: reference,
-      metadata: { wooId: String(order.id), reference },
-      customer: { email: order.billing.email },
-      lineItems: lines.map((line) => ({
-        name: line.name.slice(0, 180),
-        amountInCents: line.amountInCents,
-        quantity: line.qty,
-      })),
-    }),
+    body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => null);
   if (!res.ok || !data || !data.success || !data.checkoutUrl) {
-    throw new Error((data && data.error) || `BYTEQS ${res.status}`);
+    const detail = data && typeof data.error === "string" && !data.error.startsWith("{") ? data.error : "";
+    throw new Error(detail.slice(0, 160) || "The payment page did not open.");
   }
-  await wc(`/orders/${order.id}`, {
-    method: "PUT",
-    body: JSON.stringify({
-      meta_data: [
-        { key: "_byteqs_status", value: "unpaid" },
-        { key: "_byteqs_reference", value: reference },
-        { key: "_byteqs_checkout_url", value: data.checkoutUrl },
-      ],
-    }),
-  });
+  if (order) {
+    await wc(`/orders/${order.id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        meta_data: [
+          { key: "_byteqs_status", value: "unpaid" },
+          { key: "_byteqs_reference", value: reference },
+          { key: "_byteqs_checkout_url", value: data.checkoutUrl },
+        ],
+      }),
+    }).catch(() => {});
+  }
   return data.checkoutUrl;
+}
+
+async function wooOrder(lines) {
+  try {
+    return await wc("/orders", {
+      method: "POST",
+      body: JSON.stringify({
+        set_paid: false,
+        status: "pending",
+        payment_method: WC_GATEWAY,
+        payment_method_title: "BYTEQS",
+        currency: "EUR",
+        billing: { first_name: "Guest", last_name: "Guest", country: "FR" },
+        fee_lines: lines.map((line) => ({
+          name: `${line.name} × ${line.qty}`,
+          amount: line.total,
+          total: line.total,
+          tax_status: "none",
+          meta_data: [
+            { key: "_f1_race", value: line.raceId },
+            { key: "_f1_tier", value: line.tierId },
+            { key: "_f1_qty", value: String(line.qty) },
+          ],
+        })),
+        meta_data: [{ key: "_origine", value: "f1-tickets" }],
+      }),
+    });
+  } catch {
+    return null;
+  }
 }
 
 module.exports = async function handler(req, res) {
@@ -108,12 +134,6 @@ module.exports = async function handler(req, res) {
   }
   try {
     const body = await bodyOf(req);
-    const email = String(body.email || "").trim().toLowerCase();
-    const { first, last } = splitName(body.name);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      res.status(400).json({ error: "Enter a valid email." });
-      return;
-    }
     const items = Array.isArray(body.items) ? body.items : [];
     if (!items.length || items.length > 24) {
       res.status(400).json({ error: "The basket is empty." });
@@ -137,33 +157,9 @@ module.exports = async function handler(req, res) {
       };
     });
     const expected = lines.reduce((sum, line) => sum + Number(line.total), 0).toFixed(2);
-    const order = await wc("/orders", {
-      method: "POST",
-      body: JSON.stringify({
-        set_paid: false,
-        status: "pending",
-        payment_method: WC_GATEWAY,
-        payment_method_title: "BYTEQS",
-        currency: "EUR",
-        billing: { first_name: first, last_name: last, email, country: "FR" },
-        fee_lines: lines.map((line) => ({
-          name: `${line.name} × ${line.qty}`,
-          amount: line.total,
-          total: line.total,
-          tax_status: "none",
-          meta_data: [
-            { key: "_f1_race", value: line.raceId },
-            { key: "_f1_tier", value: line.tierId },
-            { key: "_f1_qty", value: String(line.qty) },
-          ],
-        })),
-        meta_data: [{ key: "_origine", value: "f1-tickets" }],
-      }),
-    });
-    if (Number(order.total).toFixed(2) !== expected) {
-      throw new Error(`WooCommerce total ${order.total} does not match ${expected}.`);
-    }
-    const url = await byteqsSession(order, lines);
+    const created = await wooOrder(lines);
+    const order = created && Number(created.total).toFixed(2) === expected ? created : null;
+    const url = await byteqsSession(lines, order);
     res.status(200).json({ url });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Checkout failed.";

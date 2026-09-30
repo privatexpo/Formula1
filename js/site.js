@@ -341,8 +341,6 @@
     }
     placedName = "";
     orderPaid = false;
-    const keptName = document.querySelector("#checkout-form [name=name]")?.value || "";
-    const keptEmail = document.querySelector("#checkout-form [name=email]")?.value || "";
     const noun = tickets === 1 ? "ticket" : "tickets";
     root.innerHTML = `
       <div class="basket-grid">
@@ -363,13 +361,11 @@
             <div class="basket-total"><dt>Total</dt><dd>${cartTotalLabel()}</dd></div>
           </dl>
           <form id="checkout-form">
-            <label>Name<input name="name" type="text" required autocomplete="name" maxlength="80" value="${esc(keptName)}"></label>
-            <label>Email<input name="email" type="email" required autocomplete="email" maxlength="120" value="${esc(keptEmail)}"></label>
             <button class="button" type="submit">Place order</button>
           </form>
           <a class="basket-continue" href="index.html#calendar">Continue shopping</a>
           <ul class="basket-guarantees">
-            <li>Name and email only. No card on this page.</li>
+            <li>No card on this page. Payment opens on the secure page.</li>
             <li>A confirmation is sent to your email.</li>
             <li>Tickets in one line stay in the same category.</li>
           </ul>
@@ -864,7 +860,6 @@
     if (!cart.length) return;
     const form = event.target;
     const button = form.querySelector("button[type=submit]");
-    const data = new FormData(form);
     button.disabled = true;
     button.textContent = "Redirecting…";
     try {
@@ -872,8 +867,6 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: data.get("name"),
-          email: data.get("email"),
           items: cart.map((item) => ({ raceId: item.raceId, tierId: item.tierId, qty: item.qty })),
         }),
       });
