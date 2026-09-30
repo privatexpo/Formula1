@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Classements — Apex</title>
+  <meta name="description" content="2027 Formula 1 driver and constructor standings.">
+  <link rel="icon" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/theme.css?v=spot58">
+</head>
+<body data-page="standings">
+  <header class="site-header" id="header"></header>
+  <main id="contenu">
+    <div class="container page-intro">
+      <h1 class="page-title">Classements</h1>
+      <p>Présentation seulement. Les points ne reflètent pas le championnat réel.</p>
+    </div>
+    <section class="section" style="padding-top:12px">
+      <div class="container">
+        <div class="notice" style="margin-bottom:16px">Classement fictif, affiché pour montrer la grille, les barres d’écurie et la typographie du thème.</div>
+        <div class="tabs">
+          <button class="chip" type="button" data-action="tab" data-tab="drivers" aria-pressed="true">Pilotes</button>
+          <button class="chip" type="button" data-action="tab" data-tab="teams">Constructeurs</button>
+        </div>
+        <div class="table" id="standings-table"></div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer" id="footer"></footer>
+  <script src="js/data.js?v=spot35"></script>
+  <script src="js/site.js?v=spot58"></script>
+</body>
+</html>

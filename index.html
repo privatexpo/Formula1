@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apex — 2027 ticket store</title>
+  <meta name="description" content="2027 Formula 1 tickets. Calendar, grandstands, hospitality and waitlist.">
+  <link rel="icon" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/theme.css?v=spot58">
+</head>
+<body data-page="home">
+  <header class="site-header" id="header"></header>
+  <main id="contenu">
+    <section class="hero" id="hero" aria-label="Season tickets"></section>
+    <section class="calendar-wrap" id="calendar">
+      <div class="container" id="calendar-filters"></div>
+      <div class="container">
+        <div class="calendar-film">
+          <video autoplay muted loop playsinline>
+            <source src="assets/calendar.mp4" type="video/mp4">
+          </video>
+        </div>
+        <p class="film-caption">From the first lights in Bahrain to the last lap in Abu Dhabi.</p>
+      </div>
+      <div class="container" id="calendar-root"></div>
+    </section>
+    <section class="interest">
+      <div class="container">
+        <h2>You could also be interested in</h2>
+        <div class="interest-grid">
+          <a class="interest-card" id="hospitality" href="hospitality.html">
+            <video autoplay muted loop playsinline>
+              <source src="assets/paddock.mp4?v=1" type="video/mp4">
+            </video>
+            <div class="interest-copy">
+              <strong>Hospitality</strong>
+              <p>The suite above the garages, from Bahrain to Abu Dhabi.</p>
+              <ul class="interest-facts">
+                <li>24 Grands Prix</li>
+                <li>Pit lane walk</li>
+                <li>Three-course dining</li>
+                <li>Track tour</li>
+              </ul>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer" id="footer"></footer>
+  <script src="js/data.js?v=spot35"></script>
+  <script src="js/site.js?v=spot58"></script>
+</body>
+</html>
