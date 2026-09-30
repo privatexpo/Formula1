@@ -154,6 +154,7 @@
 
   let cart = loadCart();
   let placedName = "";
+  let orderPaid = false;
 
   document.getElementById("header").innerHTML = `
     <a class="skip" href="#contenu">Skip to content</a>
@@ -335,10 +336,11 @@
     const root = document.getElementById("basket-root");
     if (!root) return;
     if (!cart.length) {
-      root.innerHTML = placedName ? basketDone(placedName) : basketEmpty();
+      root.innerHTML = orderPaid || placedName ? basketDone(placedName) : basketEmpty();
       return;
     }
     placedName = "";
+    orderPaid = false;
     const keptName = document.querySelector("#checkout-form [name=name]")?.value || "";
     const keptEmail = document.querySelector("#checkout-form [name=email]")?.value || "";
     const noun = tickets === 1 ? "ticket" : "tickets";
@@ -424,11 +426,12 @@
   }
 
   function basketDone(name) {
+    const who = name ? `, ${esc(name)}` : "";
     return `
       <div class="basket-empty">
         <div class="basket-empty-mark" aria-hidden="true">✓</div>
         <h2>Order confirmed</h2>
-        <p>Thanks, ${esc(name)}. Your tickets are reserved. A confirmation will be sent to your email.</p>
+        <p>Thanks${who}. Your tickets are reserved. A confirmation will be sent to your email.</p>
         <a class="button" href="index.html">Back to the store</a>
       </div>`;
   }
@@ -855,14 +858,33 @@
     });
   });
 
-  document.addEventListener("submit", (event) => {
+  document.addEventListener("submit", async (event) => {
     if (event.target?.id !== "checkout-form") return;
     event.preventDefault();
     if (!cart.length) return;
-    placedName = String(new FormData(event.target).get("name") || "").trim();
-    cart = [];
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    renderCart();
+    const form = event.target;
+    const button = form.querySelector("button[type=submit]");
+    const data = new FormData(form);
+    button.disabled = true;
+    button.textContent = "Redirecting…";
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.get("name"),
+          email: data.get("email"),
+          items: cart.map((item) => ({ raceId: item.raceId, tierId: item.tierId, qty: item.qty })),
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.url) throw new Error(payload.error || "Checkout failed.");
+      location.href = payload.url;
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = "Place order";
+      toast(error instanceof Error ? error.message : "Checkout failed.");
+    }
   });
 
   document.getElementById("wait-form").addEventListener("submit", (event) => {
@@ -1052,6 +1074,12 @@
     mark();
   }
 
+  if (page === "basket" && new URLSearchParams(location.search).get("paid") === "1") {
+    cart = [];
+    localStorage.setItem(CART_KEY, "[]");
+    orderPaid = true;
+    placedName = "";
+  }
   renderCart();
   renderHero();
   renderCalendar();
