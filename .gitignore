@@ -1,2 +1,5 @@
 .DS_Store
 YTDown.com_*.mp4
+.env
+.env.local
+.env*.local
