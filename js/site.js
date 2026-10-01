@@ -250,16 +250,41 @@
       </div>
     </div>
     <div class="backdrop hidden" data-modal="contact">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="contact-title">
+      <div class="modal modal-contact" role="dialog" aria-modal="true" aria-labelledby="contact-title">
         <header><h2 id="contact-title">Contact us</h2><button class="icon-btn" type="button" data-action="close-modal" aria-label="Close">×</button></header>
         <form id="contact-form">
-          <label>Name<input name="name" type="text" required></label>
-          <label>Email<input name="email" type="email" required></label>
-          <label>Message<textarea name="message" rows="4" required></textarea></label>
-          <button class="button" type="submit">Send</button>
+          <p class="contact-lead">Questions about an order, a seat or hospitality. We reply to the email you enter.</p>
+          <p class="contact-mail">
+            <img src="assets/icon-mail.svg" alt="" width="16" height="16">
+            <a href="mailto:support@ticketing-formula1.com">support@ticketing-formula1.com</a>
+          </p>
+          <label>Topic
+            <select name="topic" required>
+              <option value="" selected disabled>Choose a topic</option>
+              <option value="order">An order</option>
+              <option value="tickets">Tickets and seating</option>
+              <option value="hospitality">Hospitality</option>
+              <option value="other">Something else</option>
+            </select>
+          </label>
+          <label>
+            <span class="contact-cap">Order number <span class="opt">optional</span></span>
+            <input name="reference" type="text" autocomplete="off" placeholder="F1-1042">
+          </label>
+          <div class="contact-pair">
+            <label>Name<input name="name" type="text" required autocomplete="name"></label>
+            <label>Email<input name="email" type="email" required autocomplete="email"></label>
+          </div>
+          <label>Message<textarea name="message" rows="4" required placeholder="The Grand Prix, the category, and what you need."></textarea></label>
+          <button class="button" type="submit">Send message</button>
         </form>
         <div class="success hidden" data-contact-success>
-          <p>Thank you. We have your message and will reply to this email.</p>
+          <p class="contact-done">Message received</p>
+          <p data-contact-reply>We will reply to this email.</p>
+          <p class="contact-mail">
+            <img src="assets/icon-mail.svg" alt="" width="16" height="16">
+            <a href="mailto:support@ticketing-formula1.com">support@ticketing-formula1.com</a>
+          </p>
           <button class="button" type="button" data-action="close-modal">Close</button>
         </div>
       </div>
@@ -785,7 +810,11 @@
     }
     if (action === "close-modal") closeModals();
     if (action === "safe") openModal("safe");
-    if (action === "contact") openModal("contact");
+    if (action === "contact") {
+      const form = document.getElementById("contact-form");
+      if (form) form.reset();
+      openModal("contact");
+    }
     if (action === "account") {
       const panel = document.getElementById("account-panel");
       const open = panel.hidden;
@@ -939,6 +968,21 @@
 
   document.getElementById("contact-form").addEventListener("submit", (event) => {
     event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const email = String(data.get("email") || "").trim();
+    const list = JSON.parse(localStorage.getItem("apex-contact") || "[]");
+    list.push({
+      topic: data.get("topic"),
+      reference: data.get("reference"),
+      name: data.get("name"),
+      email,
+      message: data.get("message"),
+      at: new Date().toISOString(),
+    });
+    localStorage.setItem("apex-contact", JSON.stringify(list));
+    const reply = document.querySelector("[data-contact-reply]");
+    if (reply) reply.textContent = `We will reply to ${email}.`;
+    event.currentTarget.reset();
     event.currentTarget.classList.add("hidden");
     document.querySelector("[data-contact-success]").classList.remove("hidden");
   });
