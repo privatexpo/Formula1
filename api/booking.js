@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const mail = require("./mail");
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
@@ -77,6 +78,31 @@ function linesOf(order) {
   });
 }
 
+function day(iso) {
+  const [year, month, date] = String(iso || "").split("-").map(Number);
+  if (!year || !month || !date) return null;
+  return new Date(year, month - 1, date);
+}
+
+function shift(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function accessOf(raceDate) {
+  const race = day(raceDate);
+  if (!race) return { state: "ready", opens: "" };
+  const opens = shift(race, -12);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let state = "upcoming";
+  if (today > race) state = "closed";
+  else if (today >= opens) state = "ready";
+  const opensLabel = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(opens);
+  return { state, opens: opensLabel };
+}
+
 function ticketsOf(order) {
   const paid = order.status === "processing" || order.status === "completed";
   const races = catalogue();
@@ -88,6 +114,8 @@ function ticketsOf(order) {
     const category = parts[1] || "Ticket";
     const race = races.find((entry) => entry.country === event);
     const when = race ? `${race.dates} ${race.season}` : "";
+    const gate = accessOf(race && race.raceDate);
+    const ready = paid && gate.state === "ready";
     for (let i = 0; i < line.qty; i++) {
       number += 1;
       const id = `F1-${order.id}-${String(number).padStart(2, "0")}`;
@@ -97,8 +125,11 @@ function ticketsOf(order) {
         event,
         category,
         when,
-        issued: paid,
-        ...(paid ? { code: `${id}.${check}` } : {}),
+        raceDate: race ? race.raceDate : "",
+        state: paid ? gate.state : "unpaid",
+        opens: gate.opens,
+        issued: ready,
+        ...(ready ? { code: `${id}.${check}` } : {}),
       });
     }
   }
@@ -110,18 +141,29 @@ module.exports = async function handler(req, res) {
     res.status(405).json({ error: "POST only" });
     return;
   }
-  const missing = { error: "No booking matches that email and order number." };
+    const missing = { error: "No booking matches that email and password." };
   try {
     const body = await bodyOf(req);
     const email = String(body.email || "").trim().toLowerCase();
-    const match = String(body.reference || "").trim().match(/^(?:F1-)?(\d+)$/i);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !match || !WC_URL || !WC_KEY || !WC_SECRET) {
+    const password = String(body.password || "").trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 6 || !WC_URL || !WC_KEY || !WC_SECRET) {
       res.status(404).json(missing);
       return;
     }
-    const order = await wc(`/orders/${match[1]}`);
-    const orderEmail = String(order?.billing?.email || "").trim().toLowerCase();
-    if (!order || !orderEmail || orderEmail !== email) {
+    const listed = await wc(`/orders?search=${encodeURIComponent(email)}&per_page=20&orderby=date&order=desc`);
+    const briefs = (Array.isArray(listed) ? listed : [])
+      .filter((order) => String(order?.billing?.email || "").trim().toLowerCase() === email)
+      .slice(0, 8);
+    let order = null;
+    for (const brief of briefs) {
+      const full = await wc(`/orders/${brief.id}`);
+      const stored = (full?.meta_data || []).find((item) => item.key === "_f1_access");
+      if (full && stored && mail.same(String(stored.value), mail.hash(password))) {
+        order = full;
+        break;
+      }
+    }
+    if (!order) {
       res.status(404).json(missing);
       return;
     }

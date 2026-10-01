@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const mail = require("../mail");
 
 function readRaw(req) {
   return new Promise((resolve, reject) => {
@@ -41,23 +42,58 @@ function signed(raw, signature, timestamp, secrets) {
   );
 }
 
-async function markPaid(id, email) {
+function wooAuth() {
   const base = (process.env.WC_URL || process.env.WOOCOMMERCE_URL || "").replace(/\/$/, "");
   const key = (process.env.WC_CONSUMER_KEY || process.env.WOOCOMMERCE_CONSUMER_KEY || "").trim();
   const secret = (process.env.WC_CONSUMER_SECRET || process.env.WOOCOMMERCE_CONSUMER_SECRET || "").trim();
-  if (!base || !key || !secret) return;
-  const url = new URL(`${base}/wp-json/wc/v3/orders/${id}`);
-  url.searchParams.set("consumer_key", key);
-  url.searchParams.set("consumer_secret", secret);
+  if (!base || !key || !secret) return null;
+  return { base, key, secret };
+}
+
+async function woo(pathname, init) {
+  const auth = wooAuth();
+  if (!auth) return null;
+  const url = new URL(`${auth.base}/wp-json/wc/v3${pathname}`);
+  url.searchParams.set("consumer_key", auth.key);
+  url.searchParams.set("consumer_secret", auth.secret);
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      Authorization: "Basic " + Buffer.from(`${auth.key}:${auth.secret}`).toString("base64"),
+      "Content-Type": "application/json",
+      ...(init && init.headers),
+    },
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+async function markPaid(id, email) {
+  const order = await woo(`/orders/${id}`);
+  if (!order) return;
+  const existing = (order.meta_data || []).find((item) => item.key === "_f1_access");
   const body = { status: "processing", set_paid: true };
   if (email) body.billing = { email };
-  await fetch(url, {
-    method: "PUT",
-    headers: {
-      Authorization: "Basic " + Buffer.from(`${key}:${secret}`).toString("base64"),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+  let code = "";
+  if (!existing) {
+    code = mail.password();
+    body.meta_data = [{ key: "_f1_access", value: mail.hash(code) }];
+  }
+  const saved = await woo(`/orders/${id}`, { method: "PUT", body: JSON.stringify(body) });
+  if (!code || !email) return;
+  const source = saved || order;
+  const fees = Array.isArray(source.fee_lines) ? source.fee_lines : [];
+  const items = Array.isArray(source.line_items) ? source.line_items : [];
+  const lines = (fees.length ? fees : items).map((line) => ({
+    name: String(line.name || "Ticket"),
+    qty: Number(line.quantity || 1),
+  }));
+  await mail.send({
+    to: email,
+    reference: `F1-${id}`,
+    password: code,
+    lines,
+    total: source.total ? `${source.total} ${source.currency || "EUR"}` : "",
   });
 }
 

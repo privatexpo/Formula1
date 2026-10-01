@@ -372,10 +372,19 @@
           </dl>
           <form id="checkout-form">
             <button class="button" type="submit">Place order</button>
+            <p class="basket-legal">By placing this order you accept the <a href="terms.html">Terms &amp; conditions</a>, the <a href="privacy.html">Privacy policy</a> and the <a href="privacy.html#cookies">Cookies policy</a>.</p>
           </form>
+          <div class="pay-cards">
+            <p>Cards accepted</p>
+            <ul>
+              <li><img src="assets/cards/visa.svg" alt="Visa" width="56" height="36"></li>
+              <li><img src="assets/cards/mastercard.svg" alt="Mastercard" width="56" height="36"></li>
+              <li><img src="assets/cards/amex.svg" alt="American Express" width="56" height="36"></li>
+            </ul>
+          </div>
           <a class="basket-continue" href="index.html#calendar">Continue shopping</a>
           <ul class="basket-guarantees">
-            <li>No card on this page. Payment opens on the secure page.</li>
+            <li>Payment opens on the secure page. The card number stays there.</li>
             <li>A confirmation is sent to your email.</li>
             <li>Tickets in one line stay in the same category.</li>
           </ul>
@@ -941,10 +950,28 @@
     }
   });
 
+  const DEMO_EMAIL = "alex@example.com";
+  const DEMO_PASSWORD = "K7NP-4RQM";
+
+  function demoOrder() {
+    return {
+      reference: "F1-1042",
+      status: "processing",
+      statusLabel: "Paid",
+      total: "2 422,00 €",
+      placed: "1 October 2026",
+      tickets: [
+        { id: "F1-1042-01", event: "Bahrain", category: "General admission", when: "12 – 14 Mar 2027", raceDate: "2027-03-14", issued: true, code: "F1-1042-01.A1B2C3D4" },
+        { id: "F1-1042-02", event: "Bahrain", category: "General admission", when: "12 – 14 Mar 2027", raceDate: "2027-03-14", issued: true, code: "F1-1042-02.B2C3D4E5" },
+        { id: "F1-1042-03", event: "Monaco", category: "Paddock Club", when: "4 – 6 Jun 2027", raceDate: "2027-06-06", issued: true, code: "F1-1042-03.C3D4E5F6" },
+      ],
+    };
+  }
+
   function savedBooking() {
     try {
       const value = JSON.parse(localStorage.getItem(BOOK_KEY) || "null");
-      if (value && value.email && value.reference) return value;
+      if (value && value.email && value.payload) return value;
     } catch { /* ignore a broken saved booking */ }
     return null;
   }
@@ -956,9 +983,31 @@
     if (lookup) lookup.hidden = false;
     if (wallet) wallet.hidden = true;
     if (!lead) return;
+    lead.classList.remove("is-account");
     lead.querySelector(".booking-kicker").textContent = "Your order";
     lead.querySelector("h1").textContent = "Retrieve booking";
-    lead.querySelector("p:last-of-type").textContent = "Look up a paid or pending order with the email used at payment and the order number on the confirmation.";
+    lead.querySelector("p:last-of-type").textContent = "Open your tickets with the email from the payment and the password sent after payment.";
+  }
+
+  function dayStamp(iso) {
+    const [year, month, date] = String(iso || "").split("-").map(Number);
+    if (!year || !month || !date) return null;
+    return new Date(year, month - 1, date);
+  }
+
+  function gateFor(ticket) {
+    if (ticket.state) return { state: ticket.state, opens: ticket.opens || "" };
+    const race = dayStamp(ticket.raceDate);
+    if (!race) return { state: ticket.code ? "ready" : "unpaid", opens: "" };
+    const opens = new Date(race);
+    opens.setDate(opens.getDate() - 12);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let state = "upcoming";
+    if (today > race) state = "closed";
+    else if (today >= opens) state = "ready";
+    const label = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(opens);
+    return { state, opens: label };
   }
 
   function showTicketWallet(payload, email) {
@@ -969,52 +1018,80 @@
     if (lookup) lookup.hidden = true;
     wallet.hidden = false;
     const tickets = payload.tickets || [];
-    const issued = tickets.some((ticket) => ticket.issued);
+    const gates = tickets.map((ticket) => gateFor(ticket));
+    const issued = gates.some((gate, index) => gate.state === "ready" && tickets[index].code);
     const tone = /cancel|refund|fail/i.test(payload.status || "") ? "is-stop" : /pending|hold/i.test(payload.status || "") ? "is-wait" : "";
-    lead.querySelector(".booking-kicker").textContent = payload.reference || "Your order";
-    lead.querySelector("h1").textContent = "My tickets";
+    lead.classList.add("is-account");
+    lead.querySelector(".booking-kicker").textContent = "Account";
+    lead.querySelector("h1").textContent = "Your tickets";
     lead.querySelector("p:last-of-type").textContent = email;
     const cards = tickets.map((ticket, index) => {
-      const qr = ticket.issued && ticket.code && typeof qrSvg === "function"
+      const gate = gates[index];
+      const ready = gate.state === "ready" && ticket.code && typeof qrSvg === "function";
+      const stub = ready
         ? `<div class="pass__qr">${qrSvg(ticket.code)}</div>`
-        : `<div class="pass__qr pass__qr--wait"><span>After payment</span></div>`;
-      return `<article class="pass${ticket.issued ? "" : " is-locked"}">
-        <div>
-          <p class="pass__kicker">E-ticket ${String(index + 1).padStart(2, "0")} / ${String(tickets.length).padStart(2, "0")}</p>
+        : `<div class="pass__wait"><p>${gate.state === "closed" ? "Closed" : gate.state === "unpaid" ? "After payment" : "Opens"}</p><strong>${esc(gate.state === "upcoming" ? gate.opens : gate.state === "closed" ? "Event finished" : gate.state === "unpaid" ? "Pay to unlock" : "")}</strong></div>`;
+      const raw = String(ready ? ticket.code : ticket.id || "");
+      const split = raw.lastIndexOf(".");
+      const serial = split > 0 ? raw.slice(0, split) : raw;
+      const check = ready && split > 0 ? raw.slice(split + 1) : "";
+      return `<article class="pass${ready ? "" : " is-locked"}">
+        <div class="pass__spine" aria-hidden="true"></div>
+        <div class="pass__body">
+          <div class="pass__top">
+            <p class="pass__kicker">Admit one</p>
+            <p class="pass__index">${index + 1} of ${tickets.length}</p>
+          </div>
           <h2>${esc(ticket.event)}</h2>
-          <p>${esc(ticket.category)}</p>
-          ${ticket.when ? `<p class="pass__when">${esc(ticket.when)}</p>` : ""}
-          <code>${esc(ticket.issued ? ticket.code : ticket.id)}</code>
+          <p class="pass__cat">${esc(ticket.category)}</p>
+          <dl class="pass__meta">
+            <div><dt>Weekend</dt><dd>${esc(ticket.when || "—")}</dd></div>
+            <div><dt>Holder</dt><dd>${esc(email)}</dd></div>
+          </dl>
+          <p class="pass__code"><span>${esc(serial)}</span>${check ? `<span>${esc(check)}</span>` : ""}</p>
         </div>
-        ${qr}
+        <div class="pass__stub">${stub}</div>
       </article>`;
     }).join("");
     const note = issued
-      ? "One pass per person. Show the QR at the gate."
-      : "The passes stay locked until the payment is confirmed. Open this page again with the same email and order number.";
+      ? "Show one open pass per person at the gate. The QR is valid for this order only."
+      : "E-tickets open 10 days before the weekend and stay valid through race day.";
     wallet.innerHTML = `
-      <div class="wallet-bar">
-        <p class="booking-pill ${tone}">${esc(payload.statusLabel || "Booking")}</p>
-        <div class="wallet-actions">
-          ${issued ? `<button type="button" data-action="tickets-print">Print</button>` : ""}
-          <button type="button" data-action="tickets-other">Another order</button>
-          <button type="button" data-action="tickets-out">Sign out</button>
+      <section class="account-card">
+        <div class="account-card__top">
+          <div class="account-card__id">
+            <p>${esc(payload.reference || "Order")}</p>
+            <span class="booking-pill ${tone}">${esc(payload.statusLabel || "Booking")}</span>
+          </div>
+          <div class="wallet-actions">
+            ${issued ? `<button type="button" data-action="tickets-print">Print</button>` : ""}
+            <button type="button" data-action="tickets-other">Another order</button>
+            <button type="button" data-action="tickets-out">Sign out</button>
+          </div>
         </div>
-      </div>
-      <dl class="booking-meta wallet-meta">
-        <div><dt>Total</dt><dd>${esc(payload.total || "—")}</dd></div>
-        <div><dt>Placed</dt><dd>${esc(payload.placed || "—")}</dd></div>
-      </dl>
-      <div class="pass-grid">${cards || `<p class="pass-note">This order has no tickets on it.</p>`}</div>
+        <dl class="account-facts">
+          <div><dt>Passes</dt><dd>${tickets.length}</dd></div>
+          <div><dt>Total</dt><dd>${esc(payload.total || "—")}</dd></div>
+          <div><dt>Placed</dt><dd>${esc(payload.placed || "—")}</dd></div>
+        </dl>
+      </section>
+      <h2 class="account-label">Passes</h2>
+      <div class="pass-list">${cards || `<p class="pass-note">This order has no tickets on it.</p>`}</div>
       <p class="pass-note">${note}</p>`;
   }
 
-  async function lookupBooking(email, reference, submit) {
+  function rememberBooking(email, payload) {
+    localStorage.setItem(BOOK_KEY, JSON.stringify({ email, payload }));
+    const result = document.querySelector("[data-retrieve-result]");
+    if (result) result.innerHTML = "";
+    showTicketWallet(payload, email);
+  }
+
+  async function lookupBooking(email, password, submit) {
     const result = document.querySelector("[data-retrieve-result]");
     if (!result) return;
-    if (/^F1-DIRECT-/i.test(String(reference || ""))) {
-      showBookingLookup();
-      result.innerHTML = `<p class="booking-miss">This payment was not stored as an order, so the e-tickets cannot be opened.</p>`;
+    if (email.toLowerCase() === DEMO_EMAIL && password === DEMO_PASSWORD) {
+      rememberBooking(DEMO_EMAIL, demoOrder());
       return;
     }
     if (submit) submit.disabled = true;
@@ -1023,16 +1100,14 @@
       const response = await fetch("/api/booking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, reference }),
+        body: JSON.stringify({ email, password }),
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "No booking matches that email and order number.");
-      localStorage.setItem(BOOK_KEY, JSON.stringify({ email, reference: payload.reference || reference }));
-      result.innerHTML = "";
-      showTicketWallet(payload, email);
+      if (!response.ok) throw new Error(payload.error || "No booking matches that email and password.");
+      rememberBooking(email, payload);
     } catch (error) {
       showBookingLookup();
-      result.innerHTML = `<p class="booking-miss">${esc(error instanceof Error ? error.message : "No booking matches that email and order number.")}</p>`;
+      result.innerHTML = `<p class="booking-miss">${esc(error instanceof Error ? error.message : "No booking matches that email and password.")}</p>`;
     } finally {
       if (submit) submit.disabled = false;
     }
@@ -1043,21 +1118,18 @@
     retrieveForm.addEventListener("submit", (event) => {
       event.preventDefault();
       const data = new FormData(event.currentTarget);
-      lookupBooking(String(data.get("email") || ""), String(data.get("reference") || ""), event.currentTarget.querySelector("button[type=submit]"));
+      lookupBooking(String(data.get("email") || ""), String(data.get("password") || ""), event.currentTarget.querySelector("button[type=submit]"));
     });
     const params = new URLSearchParams(location.search);
     const saved = savedBooking();
-    if (params.get("order")) retrieveForm.reference.value = params.get("order");
-    else if (saved) retrieveForm.reference.value = saved.reference;
+    if (params.get("demo") === "1") rememberBooking(DEMO_EMAIL, demoOrder());
+    else if (saved) rememberBooking(saved.email, saved.payload);
     if (saved) retrieveForm.email.value = saved.email;
     if (params.get("paid") === "1") {
       const lead = document.getElementById("booking-lead");
       const copy = lead && lead.querySelector("p:last-of-type");
-      if (copy) copy.textContent = "Payment received. Enter the email from the payment page to open the e-tickets.";
+      if (copy && params.get("demo") !== "1" && !saved) copy.textContent = "Payment received. The password is in the confirmation email.";
     }
-    const email = retrieveForm.email.value.trim();
-    const reference = retrieveForm.reference.value.trim();
-    if (email && reference) lookupBooking(email, reference);
   }
 
   const editions = {
