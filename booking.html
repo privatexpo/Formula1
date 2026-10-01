@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My tickets | Formula 1 Tickets 2027</title>
+  <meta name="description" content="Open a 2027 Formula 1 booking and the e-tickets with the email and order number from the payment.">
+  <link rel="icon" href="favicon.svg?v=f1red" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/theme.css?v=tickets1">
+</head>
+<body data-page="booking">
+  <header class="site-header" id="header"></header>
+  <main id="contenu">
+    <div class="booking-wrap">
+      <header class="booking-lead" id="booking-lead">
+        <p class="booking-kicker">Your order</p>
+        <h1>Retrieve booking</h1>
+        <p>Look up a paid or pending order with the email used at payment and the order number on the confirmation.</p>
+      </header>
+      <div id="booking-lookup" class="booking-grid">
+        <div class="booking-card">
+          <form id="retrieve-form">
+            <label>Email<input name="email" type="email" required autocomplete="email" placeholder="name@email.com"></label>
+            <label>Order number<input name="reference" type="text" required autocomplete="off" placeholder="F1-1001"></label>
+            <p class="booking-hint">The number starts with F1- and is on the payment confirmation. It is not the name of the Grand Prix.</p>
+            <button class="button" type="submit">Find booking</button>
+          </form>
+          <div data-retrieve-result></div>
+        </div>
+        <aside class="booking-aside">
+          <h2>What you need</h2>
+          <ol>
+            <li>The email entered on the payment page.</li>
+            <li>The order number from that same confirmation.</li>
+          </ol>
+          <h2>What you will see</h2>
+          <ul>
+            <li>Whether the order is awaiting payment, paid, or cancelled.</li>
+            <li>One e-ticket per person, with a QR once the payment is confirmed.</li>
+            <li>The same passes the next time you open My tickets on this device.</li>
+          </ul>
+          <p>Both fields have to match the same order. A wrong email returns no booking, even if the number is right.</p>
+          <button type="button" data-action="contact">Contact us</button>
+        </aside>
+      </div>
+      <div id="booking-wallet" class="ticket-wallet" hidden></div>
+    </div>
+  </main>
+  <footer class="site-footer" id="footer"></footer>
+  <script src="js/data.js?v=prices70"></script>
+  <script src="js/qr.js?v=tickets1"></script>
+  <script src="js/site.js?v=tickets2"></script>
+</body>
+</html>

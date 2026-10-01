@@ -1,6 +1,7 @@
 (function () {
   const { races, drivers, teams } = window.APEX;
   const CART_KEY = "apex-cart";
+  const BOOK_KEY = "apex-booking";
   const WAIT_KEY = "apex-waitlist";
   const euro = (amount) =>
     new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount);
@@ -189,24 +190,29 @@
           <button class="text-btn" type="button" data-action="safe">Shop safe</button>
         </nav>
         <div class="nav-tools">
-          <a class="icon-account" href="basket.html" aria-label="Basket" ${page === "basket" ? 'aria-current="page"' : ""}>
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 19.2c1.4-3 3.8-4.4 7-4.4s5.6 1.4 7 4.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-            <span class="cart-badge" data-cart-count>0</span>
-          </a>
+          <div class="account-menu">
+            <button class="icon-account" type="button" data-action="account" aria-expanded="false" aria-controls="account-panel" aria-label="Basket and tickets">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 19.2c1.4-3 3.8-4.4 7-4.4s5.6 1.4 7 4.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <span class="cart-badge" data-cart-count hidden>0</span>
+            </button>
+            <div class="account-panel" id="account-panel" hidden>
+              <a href="basket.html">Basket</a>
+              <a href="booking.html">My tickets</a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   `;
 
   document.getElementById("footer").innerHTML = `
-    <div class="footer-hatch" aria-hidden="true"></div>
     <div class="container footer-main">
       <div class="footer-social">
-        <a href="https://www.facebook.com/Formula1" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M14.5 8.5V6.8c0-.7.5-1 1.2-1H17V3h-2.1C12.2 3 11 4.4 11 6.6v1.9H9v2.7h2V21h3.5v-9.8h2.3l.4-2.7h-2.7z"/></svg></a>
-        <a href="https://x.com/F1" target="_blank" rel="noopener noreferrer" aria-label="X"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M17.6 3h2.8l-6.1 7 7.2 11h-5.6l-4.4-6.6L6.4 21H3.6l6.6-7.6L3.2 3h5.8l4 6L17.6 3zm-1 16.2h1.6L7.5 4.7H5.8l10.8 14.5z"/></svg></a>
-        <a href="https://www.instagram.com/f1" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M8 3.5h8A4.5 4.5 0 0 1 20.5 8v8a4.5 4.5 0 0 1-4.5 4.5H8A4.5 4.5 0 0 1 3.5 16V8A4.5 4.5 0 0 1 8 3.5z"/><circle cx="12" cy="12" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.2" cy="6.8" r="0.9" fill="currentColor"/></svg></a>
-        <a href="https://www.youtube.com/@F1" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M22 12.2s0-3.2-.4-4.6c-.2-.9-.9-1.6-1.8-1.8C18.2 5.4 12 5.4 12 5.4s-6.2 0-7.8.4c-.9.2-1.6.9-1.8 1.8C2 9 2 12.2 2 12.2s0 3.2.4 4.6c.2.9.9 1.6 1.8 1.8 1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4c.9-.2 1.6-.9 1.8-1.8.4-1.4.4-4.6.4-4.6zM10 15.5v-6.6l5.2 3.3-5.2 3.3z"/></svg></a>
-      </div>
+          <a href="https://www.facebook.com/Formula1" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M14.5 8.5V6.8c0-.7.5-1 1.2-1H17V3h-2.1C12.2 3 11 4.4 11 6.6v1.9H9v2.7h2V21h3.5v-9.8h2.3l.4-2.7h-2.7z"/></svg></a>
+          <a href="https://x.com/F1" target="_blank" rel="noopener noreferrer" aria-label="X"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M17.6 3h2.8l-6.1 7 7.2 11h-5.6l-4.4-6.6L6.4 21H3.6l6.6-7.6L3.2 3h5.8l4 6L17.6 3zm-1 16.2h1.6L7.5 4.7H5.8l10.8 14.5z"/></svg></a>
+          <a href="https://www.instagram.com/f1" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M8 3.5h8A4.5 4.5 0 0 1 20.5 8v8a4.5 4.5 0 0 1-4.5 4.5H8A4.5 4.5 0 0 1 3.5 16V8A4.5 4.5 0 0 1 8 3.5z"/><circle cx="12" cy="12" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.2" cy="6.8" r="0.9" fill="currentColor"/></svg></a>
+          <a href="https://www.youtube.com/@F1" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M22 12.2s0-3.2-.4-4.6c-.2-.9-.9-1.6-1.8-1.8C18.2 5.4 12 5.4 12 5.4s-6.2 0-7.8.4c-.9.2-1.6.9-1.8 1.8C2 9 2 12.2 2 12.2s0 3.2.4 4.6c.2.9.9 1.6 1.8 1.8 1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4c.9-.2 1.6-.9 1.8-1.8.4-1.4.4-4.6.4-4.6zM10 15.5v-6.6l5.2 3.3-5.2 3.3z"/></svg></a>
+        </div>
       <div class="footer-cols">
         <ul class="footer-brand">
           <li><a href="index.html">F1 Tickets</a></li>
@@ -214,17 +220,20 @@
           <li><a href="hospitality.html">F1 Experiences</a></li>
         </ul>
         <ul class="footer-meta">
-          <li>Terms &amp; conditions</li>
-          <li>Privacy policy</li>
-          <li>Cookies policy</li>
+          <li><a href="terms.html">Terms &amp; conditions</a></li>
+          <li><a href="privacy.html">Privacy policy</a></li>
+          <li><a href="privacy.html#cookies">Cookies policy</a></li>
         </ul>
         <ul class="footer-meta">
           <li><button type="button" data-action="contact">Contact us</button></li>
           <li><a href="faq.html">FAQs</a></li>
         </ul>
       </div>
+      <div class="footer-legal">
+        <p class="footer-note">The F1 FORMULA 1 logo, F1 logo, FORMULA 1, F1, FIA FORMULA ONE WORLD CHAMPIONSHIP, GRAND PRIX and related marks are trademarks of Formula One Licensing BV, a Formula 1 company. All rights reserved.</p>
+        <p class="footer-copy">© 2026 FEVER</p>
+      </div>
     </div>
-    <p class="footer-note">The F1 FORMULA 1 logo, F1 logo, FORMULA 1, F1, FIA FORMULA ONE WORLD CHAMPIONSHIP, GRAND PRIX and related marks are trademarks of Formula One Licensing BV, a Formula 1 company. All rights reserved. © 2026 FEVER Privacy policy</p>
   `;
 
   document.body.insertAdjacentHTML(
@@ -332,6 +341,7 @@
     const tickets = cartCount();
     document.querySelectorAll("[data-cart-count]").forEach((node) => {
       node.textContent = String(tickets);
+      node.hidden = tickets < 1;
     });
     const root = document.getElementById("basket-root");
     if (!root) return;
@@ -740,7 +750,15 @@
     document.querySelector(".menu-toggle")?.setAttribute("aria-expanded", "false");
   });
 
+  function closeAccount() {
+    const panel = document.getElementById("account-panel");
+    const button = document.querySelector("[data-action='account']");
+    if (panel) panel.hidden = true;
+    if (button) button.setAttribute("aria-expanded", "false");
+  }
+
   document.addEventListener("click", (event) => {
+    if (!event.target.closest(".account-menu")) closeAccount();
     const card = event.target.closest(".opt");
     if (card && !event.target.closest(".buy-go")) pickSpot(card.dataset.tier);
     const button = event.target.closest("[data-action]");
@@ -759,6 +777,12 @@
     if (action === "close-modal") closeModals();
     if (action === "safe") openModal("safe");
     if (action === "contact") openModal("contact");
+    if (action === "account") {
+      const panel = document.getElementById("account-panel");
+      const open = panel.hidden;
+      panel.hidden = !open;
+      button.setAttribute("aria-expanded", String(open));
+    }
     if (action === "wait") openWait(button.dataset.race);
 
     if (action === "season-jump") {
@@ -841,6 +865,16 @@
 
     if (action === "hosp-packs") openPacks(button.dataset.race);
     if (action === "hosp-add") addToCart(button.dataset.race, button.dataset.tier, 1);
+    if (action === "tickets-print") window.print();
+    if (action === "tickets-other") showBookingLookup();
+    if (action === "tickets-out") {
+      localStorage.removeItem(BOOK_KEY);
+      const form = document.getElementById("retrieve-form");
+      if (form) form.reset();
+      const result = document.querySelector("[data-retrieve-result]");
+      if (result) result.innerHTML = "";
+      showBookingLookup();
+    }
 
     if (action === "tab") {
       standingsTab = button.dataset.tab;
@@ -901,8 +935,130 @@
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeModals();
+    if (event.key === "Escape") {
+      closeAccount();
+      closeModals();
+    }
   });
+
+  function savedBooking() {
+    try {
+      const value = JSON.parse(localStorage.getItem(BOOK_KEY) || "null");
+      if (value && value.email && value.reference) return value;
+    } catch { /* ignore a broken saved booking */ }
+    return null;
+  }
+
+  function showBookingLookup() {
+    const lookup = document.getElementById("booking-lookup");
+    const wallet = document.getElementById("booking-wallet");
+    const lead = document.getElementById("booking-lead");
+    if (lookup) lookup.hidden = false;
+    if (wallet) wallet.hidden = true;
+    if (!lead) return;
+    lead.querySelector(".booking-kicker").textContent = "Your order";
+    lead.querySelector("h1").textContent = "Retrieve booking";
+    lead.querySelector("p:last-of-type").textContent = "Look up a paid or pending order with the email used at payment and the order number on the confirmation.";
+  }
+
+  function showTicketWallet(payload, email) {
+    const lookup = document.getElementById("booking-lookup");
+    const wallet = document.getElementById("booking-wallet");
+    const lead = document.getElementById("booking-lead");
+    if (!wallet || !lead) return;
+    if (lookup) lookup.hidden = true;
+    wallet.hidden = false;
+    const tickets = payload.tickets || [];
+    const issued = tickets.some((ticket) => ticket.issued);
+    const tone = /cancel|refund|fail/i.test(payload.status || "") ? "is-stop" : /pending|hold/i.test(payload.status || "") ? "is-wait" : "";
+    lead.querySelector(".booking-kicker").textContent = payload.reference || "Your order";
+    lead.querySelector("h1").textContent = "My tickets";
+    lead.querySelector("p:last-of-type").textContent = email;
+    const cards = tickets.map((ticket, index) => {
+      const qr = ticket.issued && ticket.code && typeof qrSvg === "function"
+        ? `<div class="pass__qr">${qrSvg(ticket.code)}</div>`
+        : `<div class="pass__qr pass__qr--wait"><span>After payment</span></div>`;
+      return `<article class="pass${ticket.issued ? "" : " is-locked"}">
+        <div>
+          <p class="pass__kicker">E-ticket ${String(index + 1).padStart(2, "0")} / ${String(tickets.length).padStart(2, "0")}</p>
+          <h2>${esc(ticket.event)}</h2>
+          <p>${esc(ticket.category)}</p>
+          ${ticket.when ? `<p class="pass__when">${esc(ticket.when)}</p>` : ""}
+          <code>${esc(ticket.issued ? ticket.code : ticket.id)}</code>
+        </div>
+        ${qr}
+      </article>`;
+    }).join("");
+    const note = issued
+      ? "One pass per person. Show the QR at the gate."
+      : "The passes stay locked until the payment is confirmed. Open this page again with the same email and order number.";
+    wallet.innerHTML = `
+      <div class="wallet-bar">
+        <p class="booking-pill ${tone}">${esc(payload.statusLabel || "Booking")}</p>
+        <div class="wallet-actions">
+          ${issued ? `<button type="button" data-action="tickets-print">Print</button>` : ""}
+          <button type="button" data-action="tickets-other">Another order</button>
+          <button type="button" data-action="tickets-out">Sign out</button>
+        </div>
+      </div>
+      <dl class="booking-meta wallet-meta">
+        <div><dt>Total</dt><dd>${esc(payload.total || "—")}</dd></div>
+        <div><dt>Placed</dt><dd>${esc(payload.placed || "—")}</dd></div>
+      </dl>
+      <div class="pass-grid">${cards || `<p class="pass-note">This order has no tickets on it.</p>`}</div>
+      <p class="pass-note">${note}</p>`;
+  }
+
+  async function lookupBooking(email, reference, submit) {
+    const result = document.querySelector("[data-retrieve-result]");
+    if (!result) return;
+    if (/^F1-DIRECT-/i.test(String(reference || ""))) {
+      showBookingLookup();
+      result.innerHTML = `<p class="booking-miss">This payment was not stored as an order, so the e-tickets cannot be opened.</p>`;
+      return;
+    }
+    if (submit) submit.disabled = true;
+    result.textContent = "Looking up…";
+    try {
+      const response = await fetch("/api/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, reference }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "No booking matches that email and order number.");
+      localStorage.setItem(BOOK_KEY, JSON.stringify({ email, reference: payload.reference || reference }));
+      result.innerHTML = "";
+      showTicketWallet(payload, email);
+    } catch (error) {
+      showBookingLookup();
+      result.innerHTML = `<p class="booking-miss">${esc(error instanceof Error ? error.message : "No booking matches that email and order number.")}</p>`;
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  }
+
+  const retrieveForm = document.getElementById("retrieve-form");
+  if (retrieveForm) {
+    retrieveForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = new FormData(event.currentTarget);
+      lookupBooking(String(data.get("email") || ""), String(data.get("reference") || ""), event.currentTarget.querySelector("button[type=submit]"));
+    });
+    const params = new URLSearchParams(location.search);
+    const saved = savedBooking();
+    if (params.get("order")) retrieveForm.reference.value = params.get("order");
+    else if (saved) retrieveForm.reference.value = saved.reference;
+    if (saved) retrieveForm.email.value = saved.email;
+    if (params.get("paid") === "1") {
+      const lead = document.getElementById("booking-lead");
+      const copy = lead && lead.querySelector("p:last-of-type");
+      if (copy) copy.textContent = "Payment received. Enter the email from the payment page to open the e-tickets.";
+    }
+    const email = retrieveForm.email.value.trim();
+    const reference = retrieveForm.reference.value.trim();
+    if (email && reference) lookupBooking(email, reference);
+  }
 
   const editions = {
     chn: "Paddock pop-up",
@@ -1067,10 +1223,10 @@
     mark();
   }
 
-  if (page === "basket" && new URLSearchParams(location.search).get("paid") === "1") {
+  if ((page === "basket" || page === "booking") && new URLSearchParams(location.search).get("paid") === "1") {
     cart = [];
     localStorage.setItem(CART_KEY, "[]");
-    orderPaid = true;
+    orderPaid = page === "basket";
     placedName = "";
   }
   renderCart();

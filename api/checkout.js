@@ -58,7 +58,7 @@ async function byteqsSession(lines, order) {
   if (!BYTEQS_SECRET) throw new Error("BYTEQS_SECRET_KEY is missing.");
   const reference = order ? `F1-${order.id}` : `F1-DIRECT-${Date.now()}`;
   const payload = {
-    successUrl: `${SITE}/basket.html?paid=1`,
+    successUrl: `${SITE}/booking.html?order=${encodeURIComponent(reference)}&paid=1`,
     cancelUrl: `${SITE}/basket.html`,
     currency: "EUR",
     clientReferenceId: reference,

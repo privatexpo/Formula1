@@ -41,7 +41,7 @@ function signed(raw, signature, timestamp, secrets) {
   );
 }
 
-async function markPaid(id) {
+async function markPaid(id, email) {
   const base = (process.env.WC_URL || process.env.WOOCOMMERCE_URL || "").replace(/\/$/, "");
   const key = (process.env.WC_CONSUMER_KEY || process.env.WOOCOMMERCE_CONSUMER_KEY || "").trim();
   const secret = (process.env.WC_CONSUMER_SECRET || process.env.WOOCOMMERCE_CONSUMER_SECRET || "").trim();
@@ -49,13 +49,15 @@ async function markPaid(id) {
   const url = new URL(`${base}/wp-json/wc/v3/orders/${id}`);
   url.searchParams.set("consumer_key", key);
   url.searchParams.set("consumer_secret", secret);
+  const body = { status: "processing", set_paid: true };
+  if (email) body.billing = { email };
   await fetch(url, {
     method: "PUT",
     headers: {
       Authorization: "Basic " + Buffer.from(`${key}:${secret}`).toString("base64"),
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ status: "processing", set_paid: true }),
+    body: JSON.stringify(body),
   });
 }
 
@@ -96,7 +98,8 @@ async function handler(req, res) {
     || meta.reference || body.clientReferenceId || (wooId ? `F1-${wooId}` : "")
   );
   const match = reference.match(/^F1-(\d+)$/);
-  if (paid && match) await markPaid(match[1]);
+  const email = [object, data, body].map((node) => node && (node.customer_email || (node.customer && node.customer.email) || node.receipt_email)).find((value) => typeof value === "string" && value.includes("@"));
+  if (paid && match) await markPaid(match[1], email ? email.trim().toLowerCase() : "");
   res.status(200).json({ ok: true });
 }
 
