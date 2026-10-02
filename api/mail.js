@@ -120,16 +120,28 @@ function invoice({ reference, lines, total, site, placed, email, lang }) {
         </td></tr>`, lang);
 }
 
+function identity(raw, fallbackName) {
+  const value = String(raw || "").trim();
+  const match = value.match(/^(.*)<([^>]+)>\s*$/);
+  if (match) {
+    return {
+      name: match[1].trim().replace(/^"|"$/g, "") || fallbackName,
+      email: match[2].trim(),
+    };
+  }
+  return { name: fallbackName, email: value };
+}
+
 async function send({ to, reference, password: code, lines, total, lang }) {
   const key = (process.env.BREVO_API_KEY || "").trim();
-  const from = (process.env.BREVO_SENDER_EMAIL || process.env.MAIL_FROM || "").trim();
-  const contact = (process.env.CONTACT_EMAIL || "support@ticketing-formula1.com").trim();
-  if (!key || !from || !to) return false;
+  const sender = identity(process.env.BREVO_SENDER_EMAIL || process.env.MAIL_FROM || "", "Formula 1 Tickets");
+  const contact = identity(process.env.CONTACT_EMAIL || "support@ticketing-formula1.com", "Formula 1 Tickets");
+  if (!key || !sender.email || !to) return false;
   const site = (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://www.ticketing-formula1.com").replace(/\/$/, "");
   const language = i18n.normalize(lang);
   const letter = {
-    sender: { name: "Formula 1 Tickets", email: from },
-    replyTo: { name: "Formula 1 Tickets", email: contact },
+    sender,
+    replyTo: contact,
     to: [{ email: to }],
   };
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {

@@ -3,3 +3,6 @@ YTDown.com_*.mp4
 .env
 .env.local
 .env*.local
+
+# Local Netlify folder
+.netlify

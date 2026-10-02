@@ -1,0 +1,40 @@
+[build]
+  publish = "."
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  included_files = ["js/data.js", "js/i18n.js"]
+
+[[redirects]]
+  from = "/api/checkout"
+  to = "/.netlify/functions/checkout"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/booking"
+  to = "/.netlify/functions/booking"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/webhooks/byteqs"
+  to = "/.netlify/functions/byteqs-webhook"
+  status = 200
+  force = true
+
+# L’adresse *.netlify.app ne doit pas servir le site.
+[[redirects]]
+  from = "https://ticketing-formula1.netlify.app/*"
+  to = "https://www.ticketing-formula1.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://ticketing-formula1.netlify.app/*"
+  to = "https://www.ticketing-formula1.com/:splat"
+  status = 301
+  force = true

@@ -4,15 +4,25 @@ const path = require("path");
 const vm = require("vm");
 
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://www.ticketing-formula1.com").replace(/\/$/, "");
+const SITE_APEX = SITE.replace(/^(https:\/\/)www\./i, "$1");
 const WC_URL = (process.env.WC_URL || process.env.WOOCOMMERCE_URL || "").replace(/\/$/, "");
 const WC_KEY = (process.env.WC_CONSUMER_KEY || process.env.WOOCOMMERCE_CONSUMER_KEY || "").trim();
 const WC_SECRET = (process.env.WC_CONSUMER_SECRET || process.env.WOOCOMMERCE_CONSUMER_SECRET || "").trim();
 const WC_GATEWAY = (process.env.WC_PAYMENT_METHOD || "byteqs").trim() || "byteqs";
-const BYTEQS_ORIGIN = (process.env.BYTEQS_CHECKOUT_ORIGIN || "https://pay.ticketing-formula1.com").replace(/\/$/, "");
+const BYTEQS_ORIGIN = (process.env.BYTEQS_CHECKOUT_ORIGIN || "https://checkout.byteqs.io").replace(/\/$/, "");
+const BYTEQS_FALLBACK = "https://checkout.byteqs.io";
 const BYTEQS_SECRET = (process.env.BYTEQS_SECRET_KEY || "").trim();
 
+function dataFile() {
+  const candidates = [
+    path.join(process.cwd(), "js", "data.js"),
+    path.join(__dirname, "..", "js", "data.js"),
+  ];
+  return candidates.find((file) => fs.existsSync(file)) || candidates[0];
+}
+
 function races() {
-  const file = path.join(process.cwd(), "js", "data.js");
+  const file = dataFile();
   const context = { window: {} };
   vm.createContext(context);
   vm.runInContext(fs.readFileSync(file, "utf8"), context, { filename: "data.js" });
@@ -59,8 +69,8 @@ async function byteqsSession(lines, order, lang) {
   if (!BYTEQS_SECRET) throw new Error("BYTEQS_SECRET_KEY is missing.");
   const reference = order ? `F1-${order.id}` : `F1-DIRECT-${Date.now()}`;
   const payload = {
-    successUrl: `${SITE}/booking.html?order=${encodeURIComponent(reference)}&paid=1`,
-    cancelUrl: `${SITE}/basket.html`,
+    successUrl: `${SITE_APEX}/booking.html?order=${encodeURIComponent(reference)}&paid=1`,
+    cancelUrl: `${SITE_APEX}/basket.html`,
     currency: "EUR",
     clientReferenceId: reference,
     metadata: { reference, lang, ...(order ? { wooId: String(order.id) } : {}) },
@@ -70,16 +80,28 @@ async function byteqsSession(lines, order, lang) {
       quantity: line.qty,
     })),
   };
-  const res = await fetch(`${BYTEQS_ORIGIN}/api/hosted-checkout`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${BYTEQS_SECRET}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json().catch(() => null);
-  if (!res.ok || !data || !data.success || !data.checkoutUrl) {
+  const bases = [...new Set([BYTEQS_ORIGIN, BYTEQS_FALLBACK])];
+  let res = null;
+  let data = null;
+  for (const base of bases) {
+    try {
+      res = await fetch(`${base}/api/hosted-checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${BYTEQS_SECRET}`,
+          Origin: SITE_APEX,
+          Referer: `${SITE_APEX}/`,
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      continue;
+    }
+    data = await res.json().catch(() => null);
+    if (res.ok && data && data.success && data.checkoutUrl) break;
+  }
+  if (!res || !res.ok || !data || !data.success || !data.checkoutUrl) {
     const detail = data && typeof data.error === "string" && !data.error.startsWith("{") ? data.error : "";
     throw new Error(detail.slice(0, 160) || "The payment page did not open.");
   }

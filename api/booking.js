@@ -52,7 +52,7 @@ async function wc(pathname) {
 
 function catalogue() {
   try {
-    const file = path.join(process.cwd(), "js", "data.js");
+    const file = [path.join(process.cwd(), "js", "data.js"), path.join(__dirname, "..", "js", "data.js")].find((item) => fs.existsSync(item)) || path.join(process.cwd(), "js", "data.js");
     const context = { window: {} };
     vm.createContext(context);
     vm.runInContext(fs.readFileSync(file, "utf8"), context, { filename: "data.js" });
