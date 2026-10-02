@@ -1209,6 +1209,14 @@
     else if (saved) rememberBooking(saved.email, saved.payload);
     if (saved) retrieveForm.email.value = saved.email;
     if (params.get("paid") === "1") {
+      const order = params.get("order") || "";
+      if (/^F1-\d+$/.test(order)) {
+        fetch("/api/retour", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order }),
+        }).catch(() => {});
+      }
       const lead = document.getElementById("booking-lead");
       const copy = lead && lead.querySelector("p:last-of-type");
       if (copy && params.get("demo") !== "1" && !saved) copy.textContent = t("book.paidNote");

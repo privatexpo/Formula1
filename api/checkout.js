@@ -65,7 +65,7 @@ async function wc(pathname, init) {
   return text ? JSON.parse(text) : {};
 }
 
-async function byteqsSession(lines, order, lang) {
+async function byteqsSession(lines, order, lang, email) {
   if (!BYTEQS_SECRET) throw new Error("BYTEQS_SECRET_KEY is missing.");
   const reference = order ? `F1-${order.id}` : `F1-DIRECT-${Date.now()}`;
   const payload = {
@@ -74,6 +74,7 @@ async function byteqsSession(lines, order, lang) {
     currency: "EUR",
     clientReferenceId: reference,
     metadata: { reference, lang, ...(order ? { wooId: String(order.id) } : {}) },
+    ...(email ? { customer: { email } } : {}),
     lineItems: lines.map((line) => ({
       name: line.name.slice(0, 180),
       amountInCents: line.amountInCents,
@@ -120,7 +121,7 @@ async function byteqsSession(lines, order, lang) {
   return data.checkoutUrl;
 }
 
-async function wooOrder(lines, lang) {
+async function wooOrder(lines, lang, email) {
   try {
     return await wc("/orders", {
       method: "POST",
@@ -130,7 +131,7 @@ async function wooOrder(lines, lang) {
         payment_method: WC_GATEWAY,
         payment_method_title: "BYTEQS",
         currency: "EUR",
-        billing: { first_name: "Guest", last_name: "Guest", country: "FR" },
+        billing: { first_name: "Guest", last_name: "Guest", country: "FR", email },
         fee_lines: lines.map((line) => ({
           name: `${line.name} × ${line.qty}`,
           amount: line.total,
@@ -161,7 +162,12 @@ module.exports = async function handler(req, res) {
   try {
     const body = await bodyOf(req);
     const lang = i18n.normalize(body.lang);
+    const email = String(body.email || "").trim().toLowerCase();
     const items = Array.isArray(body.items) ? body.items : [];
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      res.status(400).json({ error: "A valid email is required." });
+      return;
+    }
     if (!items.length || items.length > 24) {
       res.status(400).json({ error: "The basket is empty." });
       return;
@@ -184,9 +190,9 @@ module.exports = async function handler(req, res) {
       };
     });
     const expected = lines.reduce((sum, line) => sum + Number(line.total), 0).toFixed(2);
-    const created = await wooOrder(lines, lang);
+    const created = await wooOrder(lines, lang, email);
     const order = created && Number(created.total).toFixed(2) === expected ? created : null;
-    const url = await byteqsSession(lines, order, lang);
+    const url = await byteqsSession(lines, order, lang, email);
     res.status(200).json({ url });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Checkout failed.";

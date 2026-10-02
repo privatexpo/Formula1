@@ -26,6 +26,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/retour"
+  to = "/.netlify/functions/retour"
+  status = 200
+  force = true
+
 # L’adresse *.netlify.app ne doit pas servir le site.
 [[redirects]]
   from = "https://ticketing-formula1.netlify.app/*"

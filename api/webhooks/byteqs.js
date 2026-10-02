@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const mail = require("../mail");
+const { confirmPaid, findEmail } = require("../confirm");
 
 function readRaw(req) {
   return new Promise((resolve, reject) => {
@@ -42,63 +42,6 @@ function signed(raw, signature, timestamp, secrets) {
   );
 }
 
-function wooAuth() {
-  const base = (process.env.WC_URL || process.env.WOOCOMMERCE_URL || "").replace(/\/$/, "");
-  const key = (process.env.WC_CONSUMER_KEY || process.env.WOOCOMMERCE_CONSUMER_KEY || "").trim();
-  const secret = (process.env.WC_CONSUMER_SECRET || process.env.WOOCOMMERCE_CONSUMER_SECRET || "").trim();
-  if (!base || !key || !secret) return null;
-  return { base, key, secret };
-}
-
-async function woo(pathname, init) {
-  const auth = wooAuth();
-  if (!auth) return null;
-  const url = new URL(`${auth.base}/wp-json/wc/v3${pathname}`);
-  url.searchParams.set("consumer_key", auth.key);
-  url.searchParams.set("consumer_secret", auth.secret);
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      Authorization: "Basic " + Buffer.from(`${auth.key}:${auth.secret}`).toString("base64"),
-      "Content-Type": "application/json",
-      ...(init && init.headers),
-    },
-  });
-  if (!res.ok) return null;
-  return res.json();
-}
-
-async function markPaid(id, email, langHint) {
-  const order = await woo(`/orders/${id}`);
-  if (!order) return;
-  const existing = (order.meta_data || []).find((item) => item.key === "_f1_access");
-  const body = { status: "processing", set_paid: true };
-  if (email) body.billing = { email };
-  let code = "";
-  if (!existing) {
-    code = mail.password();
-    body.meta_data = [{ key: "_f1_access", value: mail.hash(code) }];
-  }
-  const saved = await woo(`/orders/${id}`, { method: "PUT", body: JSON.stringify(body) });
-  if (!code || !email) return;
-  const source = saved || order;
-  const fees = Array.isArray(source.fee_lines) ? source.fee_lines : [];
-  const items = Array.isArray(source.line_items) ? source.line_items : [];
-  const lines = (fees.length ? fees : items).map((line) => ({
-    name: String(line.name || "Ticket"),
-    qty: Number(line.quantity || 1),
-  }));
-  const stored = (source.meta_data || []).find((item) => item.key === "_f1_lang");
-  await mail.send({
-    to: email,
-    reference: `F1-${id}`,
-    password: code,
-    lines,
-    total: source.total ? `${source.total} ${source.currency || "EUR"}` : "",
-    lang: (stored && stored.value) || langHint || "en",
-  });
-}
-
 async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ ok: false });
@@ -136,8 +79,8 @@ async function handler(req, res) {
     || meta.reference || body.clientReferenceId || (wooId ? `F1-${wooId}` : "")
   );
   const match = reference.match(/^F1-(\d+)$/);
-  const email = [object, data, body].map((node) => node && (node.customer_email || (node.customer && node.customer.email) || node.receipt_email)).find((value) => typeof value === "string" && value.includes("@"));
-  if (paid && match) await markPaid(match[1], email ? email.trim().toLowerCase() : "", meta.lang || "");
+  const email = [body, data, object].map((node) => findEmail(node)).find(Boolean) || "";
+  if (paid && match) await confirmPaid(match[1], email, meta.lang || "");
   res.status(200).json({ ok: true });
 }
 

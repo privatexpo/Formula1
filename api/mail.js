@@ -136,7 +136,7 @@ async function send({ to, reference, password: code, lines, total, lang }) {
   const key = (process.env.BREVO_API_KEY || "").trim();
   const sender = identity(process.env.BREVO_SENDER_EMAIL || process.env.MAIL_FROM || "", "Formula 1 Tickets");
   const contact = identity(process.env.CONTACT_EMAIL || "support@ticketing-formula1.com", "Formula 1 Tickets");
-  if (!key || !sender.email || !to) return false;
+  if (!key || !sender.email || !to) return { ok: false, status: 0 };
   const site = (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://www.ticketing-formula1.com").replace(/\/$/, "");
   const language = i18n.normalize(lang);
   const letter = {
@@ -153,6 +153,7 @@ async function send({ to, reference, password: code, lines, total, lang }) {
       htmlContent: html({ reference, password: code, site, lang: language }),
     }),
   });
+  if (!res.ok) return { ok: false, status: res.status };
   const receipt = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": key, "Content-Type": "application/json", accept: "application/json" },
@@ -162,7 +163,7 @@ async function send({ to, reference, password: code, lines, total, lang }) {
       htmlContent: invoice({ reference, lines, total, site, email: to, lang: language }),
     }),
   });
-  return res.ok && receipt.ok;
+  return { ok: res.ok, status: receipt.ok ? res.status : receipt.status };
 }
 
 module.exports = { password, hash, same, html, invoice, send };
