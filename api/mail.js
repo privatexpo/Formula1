@@ -123,15 +123,20 @@ function invoice({ reference, lines, total, site, placed, email, lang }) {
 async function send({ to, reference, password: code, lines, total, lang }) {
   const key = (process.env.BREVO_API_KEY || "").trim();
   const from = (process.env.BREVO_SENDER_EMAIL || process.env.MAIL_FROM || "").trim();
+  const contact = (process.env.CONTACT_EMAIL || "support@ticketing-formula1.com").trim();
   if (!key || !from || !to) return false;
   const site = (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://www.ticketing-formula1.com").replace(/\/$/, "");
   const language = i18n.normalize(lang);
+  const letter = {
+    sender: { name: "Formula 1 Tickets", email: from },
+    replyTo: { name: "Formula 1 Tickets", email: contact },
+    to: [{ email: to }],
+  };
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": key, "Content-Type": "application/json", accept: "application/json" },
     body: JSON.stringify({
-      sender: { name: "Formula 1 Tickets", email: from },
-      to: [{ email: to }],
+      ...letter,
       subject: i18n.t(language, "mail.ticketsSubject", { ref: reference }),
       htmlContent: html({ reference, password: code, site, lang: language }),
     }),
@@ -140,8 +145,7 @@ async function send({ to, reference, password: code, lines, total, lang }) {
     method: "POST",
     headers: { "api-key": key, "Content-Type": "application/json", accept: "application/json" },
     body: JSON.stringify({
-      sender: { name: "Formula 1 Tickets", email: from },
-      to: [{ email: to }],
+      ...letter,
       subject: i18n.t(language, "mail.receiptSubject", { ref: reference }),
       htmlContent: invoice({ reference, lines, total, site, email: to, lang: language }),
     }),
