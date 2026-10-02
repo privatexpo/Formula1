@@ -9,17 +9,19 @@
     const prices = (race.tickets || []).filter((ticket) => !ticket.sold && ticket.price != null).map((ticket) => ticket.price);
     return prices.length ? Math.min(...prices) : null;
   };
-  const fromLabel = (race) => `From ${euro(fromPrice(race))}`;
+  const t = (key, vars) => (window.I18N ? I18N.t(key, vars) : key);
+  const fromLabel = (race) => t("card.from", { price: euro(fromPrice(race)) });
   const ticketOf = (race, id) => (race?.tickets || []).find((ticket) => ticket.id === id);
   const esc = (value) =>
     String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   const regions = [
-    { id: "all", label: "All" },
-    { id: "americas", label: "Americas" },
-    { id: "europe", label: "Europe" },
-    { id: "asia", label: "Asia-Pacific" },
-    { id: "middle-east", label: "Middle East" },
+    { id: "all", key: "region.all" },
+    { id: "americas", key: "region.americas" },
+    { id: "europe", key: "region.europe" },
+    { id: "asia", key: "region.asia" },
+    { id: "middle-east", key: "region.middle" },
   ];
+  if (window.I18N) I18N.apply(document);
   const page = document.body.dataset.page;
   const params = new URLSearchParams(location.search);
 
@@ -157,13 +159,16 @@
   let placedName = "";
   let orderPaid = false;
 
+  const langCode = (window.I18N ? I18N.lang : "en").toUpperCase();
+  const langItems = (window.I18N ? I18N.codes : ["en"]).map((code) => `<button type="button" data-action="set-lang" data-lang="${code}"${window.I18N && I18N.lang === code ? ' aria-current="true"' : ""}>${code.toUpperCase()}</button>`).join("");
+
   document.getElementById("header").innerHTML = `
-    <a class="skip" href="#contenu">Skip to content</a>
+    <a class="skip" href="#contenu">${t("skip")}</a>
     <div class="topbar">
       <div class="container topbar-row">
         <nav class="top-mid" aria-label="Sections">
-          <a href="billets.html">Tickets</a>
-          <a href="hospitality.html" ${page === "hospitality" ? 'aria-current="page"' : ""}>Hospitality</a>
+          <a href="billets.html">${t("nav.tickets")}</a>
+          <a href="hospitality.html" ${page === "hospitality" ? 'aria-current="page"' : ""}>${t("nav.hospitality")}</a>
         </nav>
         <a class="tv-mark" href="https://f1tv.formula1.com/" aria-label="F1 TV">
           <img class="tv-for-light" src="assets/f1-tv-logo.svg" alt="F1 TV" width="144" height="24">
@@ -173,31 +178,38 @@
     </div>
     <div class="redbar">
       <div class="container nav-row">
-        <button class="menu-toggle" type="button" data-action="menu" aria-expanded="false" aria-controls="nav" aria-label="Menu"><span></span></button>
+        <button class="menu-toggle" type="button" data-action="menu" aria-expanded="false" aria-controls="nav" aria-label="${t("nav.menu")}"><span></span></button>
         <a class="brand${page === "hospitality" ? " brand--hosp" : ""}" href="${page === "hospitality" ? "hospitality.html" : "index.html"}" aria-label="${page === "hospitality" ? "F1 Hospitality" : "F1 Tickets"}">
           ${page === "hospitality"
-            ? `<span class="brand-f1"><img src="assets/f1-tickets-logo.svg?v=hd1" alt=""></span><span class="brand-word">Hospitality</span>`
+            ? `<span class="brand-f1"><img src="assets/f1-tickets-logo.svg?v=hd1" alt=""></span><span class="brand-word">${t("nav.hospitality")}</span>`
             : `<img src="assets/f1-tickets-logo.svg?v=hd1" alt="F1 Tickets">`}
         </a>
         <nav id="nav" class="nav-links" aria-label="Primary">
-          <a href="index.html#calendar" ${page === "home" || page === "calendar" ? 'aria-current="page"' : ""}>F1 Calendar <i class="caret" aria-hidden="true"></i></a>
-          <a href="faq.html" ${page === "faq" ? 'aria-current="page"' : ""}>FAQ</a>
-          <a class="mobile-only" href="billets.html">Tickets</a>
-          <a class="mobile-only" href="hospitality.html" ${page === "hospitality" ? 'aria-current="page"' : ""}>Hospitality</a>
-          <a class="mobile-only" href="classements.html">Standings</a>
+          <a href="index.html#calendar" ${page === "home" || page === "calendar" ? 'aria-current="page"' : ""}>${t("nav.calendar")} <i class="caret" aria-hidden="true"></i></a>
+          <a href="faq.html" ${page === "faq" ? 'aria-current="page"' : ""}>${t("nav.faq")}</a>
+          <a class="mobile-only" href="billets.html">${t("nav.tickets")}</a>
+          <a class="mobile-only" href="hospitality.html" ${page === "hospitality" ? 'aria-current="page"' : ""}>${t("nav.hospitality")}</a>
+          <a class="mobile-only" href="classements.html">${t("nav.standings")}</a>
           <a class="mobile-only" href="https://f1tv.formula1.com/">F1 TV</a>
-          <button class="text-btn" type="button" data-action="contact">Contact us</button>
-          <button class="text-btn" type="button" data-action="safe">Shop safe</button>
+          <button class="text-btn" type="button" data-action="contact">${t("nav.contact")}</button>
+          <button class="text-btn" type="button" data-action="safe">${t("nav.safe")}</button>
         </nav>
         <div class="nav-tools">
+          <div class="lang-menu">
+            <button class="lang-toggle" type="button" data-action="lang" aria-expanded="false" aria-controls="lang-panel" aria-label="${t("lang.label")}">
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 12h16M12 4c2.2 2.4 3.3 5.1 3.3 8S14.2 17.6 12 20c-2.2-2.4-3.3-5.1-3.3-8S9.8 6.4 12 4z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              ${langCode}
+            </button>
+            <div class="lang-panel" id="lang-panel" hidden>${langItems}</div>
+          </div>
           <div class="account-menu">
-            <button class="icon-account" type="button" data-action="account" aria-expanded="false" aria-controls="account-panel" aria-label="Basket and tickets">
+            <button class="icon-account" type="button" data-action="account" aria-expanded="false" aria-controls="account-panel" aria-label="${t("nav.account")}">
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 19.2c1.4-3 3.8-4.4 7-4.4s5.6 1.4 7 4.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
               <span class="cart-badge" data-cart-count hidden>0</span>
             </button>
             <div class="account-panel" id="account-panel" hidden>
-              <a href="basket.html">Basket</a>
-              <a href="booking.html">My tickets</a>
+              <a href="basket.html">${t("account.basket")}</a>
+              <a href="booking.html">${t("account.tickets")}</a>
             </div>
           </div>
         </div>
@@ -215,22 +227,22 @@
         </div>
       <div class="footer-cols">
         <ul class="footer-brand">
-          <li><a href="index.html">F1 Tickets</a></li>
-          <li><a href="hospitality.html">F1 Hospitality</a></li>
-          <li><a href="hospitality.html">F1 Experiences</a></li>
+          <li><a href="index.html">${t("foot.tickets")}</a></li>
+          <li><a href="hospitality.html">${t("foot.hospitality")}</a></li>
+          <li><a href="hospitality.html">${t("foot.experiences")}</a></li>
         </ul>
         <ul class="footer-meta">
-          <li><a href="terms.html">Terms &amp; conditions</a></li>
-          <li><a href="privacy.html">Privacy policy</a></li>
-          <li><a href="privacy.html#cookies">Cookies policy</a></li>
+          <li><a href="terms.html">${t("foot.terms")}</a></li>
+          <li><a href="privacy.html">${t("foot.privacy")}</a></li>
+          <li><a href="privacy.html#cookies">${t("foot.cookies")}</a></li>
         </ul>
         <ul class="footer-meta">
-          <li><button type="button" data-action="contact">Contact us</button></li>
-          <li><a href="faq.html">FAQs</a></li>
+          <li><button type="button" data-action="contact">${t("nav.contact")}</button></li>
+          <li><a href="faq.html">${t("foot.faqs")}</a></li>
         </ul>
       </div>
       <div class="footer-legal">
-        <p class="footer-note">The F1 FORMULA 1 logo, F1 logo, FORMULA 1, F1, FIA FORMULA ONE WORLD CHAMPIONSHIP, GRAND PRIX and related marks are trademarks of Formula One Licensing BV, a Formula 1 company. All rights reserved.</p>
+        <p class="footer-note">${t("foot.note")}</p>
         <p class="footer-copy">© 2026 FEVER</p>
       </div>
     </div>
@@ -241,66 +253,66 @@
     `
     <div class="backdrop hidden" data-modal="safe">
       <div class="modal modal-safe" role="dialog" aria-modal="true" aria-labelledby="safe-title">
-        <header><h2 id="safe-title">Shop Safe</h2><button class="icon-btn" type="button" data-action="close-modal" aria-label="Close">×</button></header>
+        <header><h2 id="safe-title">${t("safe.title")}</h2><button class="icon-btn" type="button" data-action="close-modal" aria-label="${t("safe.close")}">×</button></header>
         <div class="sheet sheet-safe">
-          <p>Genuine tickets and hospitality packages are available from the <a href="https://www.formula1.com" target="_blank" rel="noopener noreferrer">Formula1.com</a> website, F1® race promoters and/or appointed agents. We ask that you remain vigilant against ticketing scams including fraudulent websites, suspicious emails, SMS and social media messages.</p>
-          <p>Please read our <a href="faq.html">FAQs</a> for more information on red flags to look out for when purchasing race tickets and Paddock Club™ tickets.</p>
-          <img class="shop-safe-banner" src="assets/shop-safe.png" alt="Feel the thrill of F1 live. Shop safe to secure your tickets. Race cars and crowd at the start-finish straight." width="540" height="250">
+          <p>${t("safe.p1")}</p>
+          <p>${t("safe.p2")}</p>
+          <img class="shop-safe-banner" src="assets/shop-safe.png" alt="${t("safe.alt")}" width="540" height="250">
         </div>
       </div>
     </div>
     <div class="backdrop hidden" data-modal="contact">
       <div class="modal modal-contact" role="dialog" aria-modal="true" aria-labelledby="contact-title">
-        <header><h2 id="contact-title">Contact us</h2><button class="icon-btn" type="button" data-action="close-modal" aria-label="Close">×</button></header>
+        <header><h2 id="contact-title">${t("contact.title")}</h2><button class="icon-btn" type="button" data-action="close-modal" aria-label="${t("safe.close")}">×</button></header>
         <form id="contact-form">
-          <p class="contact-lead">Questions about an order, a seat or hospitality. We reply to the email you enter.</p>
+          <p class="contact-lead">${t("contact.lead")}</p>
           <p class="contact-mail">
             <img src="assets/icon-mail.svg" alt="" width="16" height="16">
             <a href="mailto:support@ticketing-formula1.com">support@ticketing-formula1.com</a>
           </p>
-          <label>Topic
+          <label>${t("contact.topic")}
             <select name="topic" required>
-              <option value="" selected disabled>Choose a topic</option>
-              <option value="order">An order</option>
-              <option value="tickets">Tickets and seating</option>
-              <option value="hospitality">Hospitality</option>
-              <option value="other">Something else</option>
+              <option value="" selected disabled>${t("contact.choose")}</option>
+              <option value="order">${t("contact.orderTopic")}</option>
+              <option value="tickets">${t("contact.ticketsTopic")}</option>
+              <option value="hospitality">${t("contact.hospTopic")}</option>
+              <option value="other">${t("contact.otherTopic")}</option>
             </select>
           </label>
           <label>
-            <span class="contact-cap">Order number <span class="opt">optional</span></span>
+            <span class="contact-cap">${t("contact.order")} <span class="opt">${t("contact.optional")}</span></span>
             <input name="reference" type="text" autocomplete="off" placeholder="F1-1042">
           </label>
           <div class="contact-pair">
-            <label>Name<input name="name" type="text" required autocomplete="name"></label>
-            <label>Email<input name="email" type="email" required autocomplete="email"></label>
+            <label>${t("contact.name")}<input name="name" type="text" required autocomplete="name"></label>
+            <label>${t("contact.email")}<input name="email" type="email" required autocomplete="email"></label>
           </div>
-          <label>Message<textarea name="message" rows="4" required placeholder="The Grand Prix, the category, and what you need."></textarea></label>
-          <button class="button" type="submit">Send message</button>
+          <label>${t("contact.message")}<textarea name="message" rows="4" required placeholder="${t("contact.placeholder")}"></textarea></label>
+          <button class="button" type="submit">${t("contact.send")}</button>
         </form>
         <div class="success hidden" data-contact-success>
-          <p class="contact-done">Message received</p>
-          <p data-contact-reply>We will reply to this email.</p>
+          <p class="contact-done">${t("contact.received")}</p>
+          <p data-contact-reply></p>
           <p class="contact-mail">
             <img src="assets/icon-mail.svg" alt="" width="16" height="16">
             <a href="mailto:support@ticketing-formula1.com">support@ticketing-formula1.com</a>
           </p>
-          <button class="button" type="button" data-action="close-modal">Close</button>
+          <button class="button" type="button" data-action="close-modal">${t("safe.close")}</button>
         </div>
       </div>
     </div>
     <div class="backdrop hidden" data-modal="wait">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wait-title">
-        <header><h2 id="wait-title">Join the waitlist</h2><button class="icon-btn" type="button" data-action="close-modal" aria-label="Close">×</button></header>
+        <header><h2 id="wait-title">${t("wait.title")}</h2><button class="icon-btn" type="button" data-action="close-modal" aria-label="${t("safe.close")}">×</button></header>
         <form id="wait-form">
           <p class="empty" data-wait-race></p>
-          <label>Name<input name="name" type="text" required></label>
-          <label>Email<input name="email" type="email" required></label>
-          <button class="button" type="submit">Join the waitlist</button>
+          <label>${t("contact.name")}<input name="name" type="text" required></label>
+          <label>${t("contact.email")}<input name="email" type="email" required></label>
+          <button class="button" type="submit">${t("wait.join")}</button>
         </form>
         <div class="success hidden" data-wait-success>
-          <p>You are on the waitlist. We will email you if tickets for this race are released.</p>
-          <button class="button" type="button" data-action="close-modal">Close</button>
+          <p>${t("wait.success")}</p>
+          <button class="button" type="button" data-action="close-modal">${t("safe.close")}</button>
         </div>
       </div>
     </div>
@@ -308,9 +320,9 @@
       <div class="modal modal-packs" role="dialog" aria-modal="true" aria-labelledby="packs-title">
         <div class="pack-hero">
           <img class="pack-hero__photo" data-packs-photo alt="">
-          <button class="icon-btn pack-close" type="button" data-action="close-modal" aria-label="Close">×</button>
+          <button class="icon-btn pack-close" type="button" data-action="close-modal" aria-label="${t("safe.close")}">×</button>
           <div class="pack-hero__copy">
-            <p class="pack-kicker"><img data-packs-flag alt="">Hospitality</p>
+            <p class="pack-kicker"><img data-packs-flag alt="">${t("nav.hospitality")}</p>
             <h2 id="packs-title">Packages</h2>
             <p data-packs-meta></p>
           </div>
@@ -376,42 +388,43 @@
     }
     placedName = "";
     orderPaid = false;
-    const noun = tickets === 1 ? "ticket" : "tickets";
+    const countLabel = tickets === 1 ? t("basket.countOne") : t("basket.countMany", { n: tickets });
+    const noteLabel = tickets === 1 ? t("basket.noteOne") : t("basket.noteMany", { n: tickets });
     root.innerHTML = `
       <div class="basket-grid">
         <div class="basket-main">
           <div class="basket-head">
-            <h2 class="basket-count">${tickets} ${noun} in your basket</h2>
-            <button class="basket-clear" type="button" data-action="clear-cart">Empty basket</button>
+            <h2 class="basket-count">${countLabel}</h2>
+            <button class="basket-clear" type="button" data-action="clear-cart">${t("basket.emptyBtn")}</button>
           </div>
           ${cart.map(basketLine).join("")}
         </div>
         <aside class="basket-recap">
-          <p class="basket-kicker">Ready to order</p>
-          <h2>Order summary</h2>
-          <p class="basket-note">${tickets} ${noun} · weekend price</p>
+          <p class="basket-kicker">${t("basket.ready")}</p>
+          <h2>${t("basket.summary")}</h2>
+          <p class="basket-note">${noteLabel}</p>
           <dl class="basket-rows">
-            <div><dt>Subtotal</dt><dd>${cartTotalLabel()}</dd></div>
-            <div><dt>Booking fees</dt><dd class="basket-off">Included</dd></div>
-            <div class="basket-total"><dt>Total</dt><dd>${cartTotalLabel()}</dd></div>
+            <div><dt>${t("basket.subtotal")}</dt><dd>${cartTotalLabel()}</dd></div>
+            <div><dt>${t("basket.fees")}</dt><dd class="basket-off">${t("basket.included")}</dd></div>
+            <div class="basket-total"><dt>${t("basket.total")}</dt><dd>${cartTotalLabel()}</dd></div>
           </dl>
           <form id="checkout-form">
-            <button class="button" type="submit">Place order</button>
-            <p class="basket-legal">By placing this order you accept the <a href="terms.html">Terms &amp; conditions</a>, the <a href="privacy.html">Privacy policy</a> and the <a href="privacy.html#cookies">Cookies policy</a>.</p>
+            <button class="button" type="submit">${t("basket.place")}</button>
+            <p class="basket-legal">${t("basket.legal")}</p>
           </form>
           <div class="pay-cards">
-            <p>Cards accepted</p>
+            <p>${t("basket.cards")}</p>
             <ul>
               <li><img src="assets/cards/visa.svg" alt="Visa" width="56" height="36"></li>
               <li><img src="assets/cards/mastercard.svg" alt="Mastercard" width="56" height="36"></li>
               <li><img src="assets/cards/amex.svg" alt="American Express" width="56" height="36"></li>
             </ul>
           </div>
-          <a class="basket-continue" href="index.html#calendar">Continue shopping</a>
+          <a class="basket-continue" href="index.html#calendar">${t("basket.continue")}</a>
           <ul class="basket-guarantees">
-            <li>Payment opens on the secure page. The card number stays there.</li>
-            <li>A confirmation is sent to your email.</li>
-            <li>Tickets in one line stay in the same category.</li>
+            <li>${t("basket.g1")}</li>
+            <li>${t("basket.g2")}</li>
+            <li>${t("basket.g3")}</li>
           </ul>
         </aside>
       </div>`;
@@ -435,17 +448,17 @@
           <p class="basket-venue">${esc(race.circuit)}</p>
           <div class="basket-facts">
             <span>${esc(ticket.name)}</span>
-            <span>${euro(ticket.price)} each</span>
+            <span>${t("basket.each", { price: euro(ticket.price) })}</span>
           </div>
         </div>
         <div class="basket-actions">
-          <span class="stepper" aria-label="Quantity">
-            <button type="button" data-action="cart-qty" data-key="${key}" data-dir="-1" aria-label="Decrease" ${item.qty <= 1 ? "disabled" : ""}>−</button>
+          <span class="stepper" aria-label="${t("basket.qty")}">
+            <button type="button" data-action="cart-qty" data-key="${key}" data-dir="-1" aria-label="${t("basket.less")}" ${item.qty <= 1 ? "disabled" : ""}>−</button>
             <output>${item.qty}</output>
-            <button type="button" data-action="cart-qty" data-key="${key}" data-dir="1" aria-label="Increase" ${item.qty >= 8 ? "disabled" : ""}>+</button>
+            <button type="button" data-action="cart-qty" data-key="${key}" data-dir="1" aria-label="${t("basket.more")}" ${item.qty >= 8 ? "disabled" : ""}>+</button>
           </span>
           <strong class="basket-line-total">${euro(ticket.price * item.qty)}</strong>
-          <button class="basket-remove" type="button" data-action="remove" data-key="${key}" aria-label="Remove">×</button>
+          <button class="basket-remove" type="button" data-action="remove" data-key="${key}" aria-label="${t("basket.remove")}">×</button>
         </div>
       </article>`;
   }
@@ -456,23 +469,23 @@
         <div class="basket-empty-mark" aria-hidden="true">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M6 7h15l-1.4 8.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.6L5.2 4H3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1.3" fill="currentColor"/><circle cx="18" cy="20" r="1.3" fill="currentColor"/></svg>
         </div>
-        <h2>Your basket is empty</h2>
-        <p>Pick a Grand Prix and a category. Tickets you add stay together until you check out.</p>
+        <h2>${t("basket.emptyTitle")}</h2>
+        <p>${t("basket.emptyCopy")}</p>
         <div class="basket-empty-actions">
-          <a class="button" href="index.html#calendar">See the calendar</a>
-          <a class="basket-secondary" href="hospitality.html">Hospitality</a>
+          <a class="button" href="index.html#calendar">${t("basket.seeCal")}</a>
+          <a class="basket-secondary" href="hospitality.html">${t("nav.hospitality")}</a>
         </div>
       </div>`;
   }
 
   function basketDone(name) {
-    const who = name ? `, ${esc(name)}` : "";
+    const line = name ? t("basket.doneNamed", { name: esc(name) }) : t("basket.done");
     return `
       <div class="basket-empty">
         <div class="basket-empty-mark" aria-hidden="true">✓</div>
-        <h2>Order confirmed</h2>
-        <p>Thanks${who}. Your tickets are reserved. A confirmation will be sent to your email.</p>
-        <a class="button" href="index.html">Back to the store</a>
+        <h2>${t("basket.doneTitle")}</h2>
+        <p>${line}</p>
+        <a class="button" href="index.html">${t("basket.back")}</a>
       </div>`;
   }
 
@@ -482,7 +495,7 @@
     else cart.push({ raceId, tierId, qty: amount });
     saveCart();
     const race = races.find((entry) => entry.id === raceId);
-    toast(`${amount} added · ${race.country}`);
+    toast(t("toast.added", { n: amount, place: race.country }));
   }
 
   function card(race, index) {
@@ -501,8 +514,8 @@
         <h3><a href="${href}">Formula 1 ${race.name} ${race.season}</a></h3>
         <a class="tcard__circuit" href="${href}">${race.circuit}</a>
         <div class="tcard__foot">
-          <a class="button" href="${href}">Book tickets</a>
-          <a class="see-more" href="${href}">See more →</a>
+          <a class="button" href="${href}">${t("card.book")}</a>
+          <a class="see-more" href="${href}">${t("card.more")}</a>
         </div>
       </article>`;
   }
@@ -518,7 +531,7 @@
       .map((item) => {
         const list = seasonRaces.filter((race) => race.region === item.id);
         if (!list.length) return "";
-        return `<section class="race-group"><p class="race-group__title">${item.label}</p>${list.map(raceOption).join("")}</section>`;
+        return `<section class="race-group"><p class="race-group__title">${t(item.key)}</p>${list.map(raceOption).join("")}</section>`;
       })
       .join("");
   }
@@ -534,18 +547,18 @@
     const list = visibleRaces();
     const showCountries = countriesOpen && region !== "all";
     const choices = `
-      <p class="race-note">The 2027 season is a full lap of the world: 24 Grands Prix, from the lights of Bahrain in March to the Yas Marina finale in December. It opens under the floodlights in Sakhir and Jeddah, then runs through Albert Park, Suzuka and Shanghai before Miami, Montreal, Austin, Mexico City, Interlagos and the Las Vegas Strip. Europe brings the harbour of Monaco, the Algarve cliffs, Silverstone, the Red Bull Ring, Spa, the Hungaroring and Monza, a new Spanish round at the Madring, and the return of Istanbul Park. The year closes at night in Singapore, Lusail and Abu Dhabi.</p>
-      <p class="race-lead">2027 ticket sales. Choose a region, then a country. Prices are adult weekend rates, in euros.</p>
-      <div class="region-row" role="tablist" aria-label="Region">
+      <p class="race-note">${t("cal.note")}</p>
+      <p class="race-lead">${t("cal.lead")}</p>
+      <div class="region-row" role="tablist" aria-label="${t("region.label")}">
         ${regions
           .map((item) => {
             const expanded = item.id !== "all" ? ` aria-expanded="${showCountries && region === item.id}"` : "";
-            return `<button class="region-btn" type="button" data-action="region" data-region="${item.id}" aria-pressed="${region === item.id}"${expanded}>${item.label}</button>`;
+            return `<button class="region-btn" type="button" data-action="region" data-region="${item.id}" aria-pressed="${region === item.id}"${expanded}>${t(item.key)}</button>`;
           })
           .join("")}
       </div>
-      ${showCountries ? `<div class="race-options is-open" aria-label="Countries">${countryGroups()}</div>` : ""}`;
-    const cards = `<div class="cards">${list.map(card).join("") || `<p class="empty">No race in this region.</p>`}</div>`;
+      ${showCountries ? `<div class="race-options is-open" aria-label="${t("region.countries")}">${countryGroups()}</div>` : ""}`;
+    const cards = `<div class="cards">${list.map(card).join("") || `<p class="empty">${t("cal.empty")}</p>`}</div>`;
     if (filters) {
       filters.innerHTML = choices;
       root.innerHTML = cards;
@@ -562,9 +575,9 @@
         <source src="assets/hero.mp4?v=2" type="video/mp4">
       </video>
       <div class="hero-inner">
-        <p class="hero-copy">Grandstand seats across the 2027 calendar. Book a ticket at the published weekend price.</p>
+        <p class="hero-copy">${t("hero.copy")}</p>
         <div class="hero-actions">
-          <button class="button" type="button" data-action="season-jump" data-season="2027">Get you tickets</button>
+          <button class="button" type="button" data-action="season-jump" data-season="2027">${t("hero.cta")}</button>
         </div>
       </div>`;
   }
@@ -718,27 +731,27 @@
           <img class="buy__flag" src="assets/flags/${flags[race.country] || "bahrain.svg"}" alt="">
           <div class="buy__id">
             <h2 class="buy__title">${race.country}</h2>
-            <p>${race.dates} · Friday to Sunday</p>
+            <p>${race.dates} · ${t("buy.weekend")}</p>
           </div>
-          <p class="buy__from"><span>From</span><b>${euro(fromPrice(race))}</b></p>
+          <p class="buy__from"><span>${t("buy.from")}</span><b>${euro(fromPrice(race))}</b></p>
         </div>
         <div class="buy__grid">
           <div class="buy__list">
             <div class="buy__list-head">
               <h3>${race.circuit}</h3>
-              <p class="buy__count">${openCount} available${soldCount ? ` · ${soldCount} sold out` : ""}</p>
+              <p class="buy__count">${t("buy.available", { n: openCount })}${soldCount ? t("buy.soldSep", { n: soldCount }) : ""}</p>
             </div>
             ${options
               .map(
                 (ticket) => `
               <article class="opt${ticket.sold ? " is-sold" : ""}${ticket.id === selectedTier ? " is-on" : ""}" data-tier="${ticket.id}">
                 <h4>${ticket.name}</h4>
-                <p class="opt__when">Friday – Sunday</p>
+                <p class="opt__when">${t("buy.days")}</p>
                 ${
                   ticket.sold
-                    ? `<span class="opt__sold">Sold out</span>`
+                    ? `<span class="opt__sold">${t("buy.soldOut")}</span>`
                     : `<b class="opt__price">${euro(ticket.price)}</b>
-                <button class="button buy-go" type="button" data-action="book" data-race="${race.id}" data-tier="${ticket.id}">Select</button>`
+                <button class="button buy-go" type="button" data-action="book" data-race="${race.id}" data-tier="${ticket.id}">${t("buy.select")}</button>`
                 }
               </article>`
               )
@@ -761,8 +774,8 @@
           <span class="pos">${row.pos}</span>
           <span class="swatch" style="background:${row.color}"></span>
           <strong>${row.name}</strong>
-          <span class="team-col">${row.team || "Constructor"}</span>
-          <span class="pts">${row.pts} pts</span>
+          <span class="team-col">${row.team || t("stand.constructor")}</span>
+          <span class="pts">${row.pts} ${t("stand.pts")}</span>
         </article>`
       )
       .join("");
@@ -791,8 +804,16 @@
     if (button) button.setAttribute("aria-expanded", "false");
   }
 
+  function closeLang() {
+    const panel = document.getElementById("lang-panel");
+    const button = document.querySelector("[data-action='lang']");
+    if (panel) panel.hidden = true;
+    if (button) button.setAttribute("aria-expanded", "false");
+  }
+
   document.addEventListener("click", (event) => {
     if (!event.target.closest(".account-menu")) closeAccount();
+    if (!event.target.closest(".lang-menu")) closeLang();
     const card = event.target.closest(".opt");
     if (card && !event.target.closest(".buy-go")) pickSpot(card.dataset.tier);
     const button = event.target.closest("[data-action]");
@@ -815,9 +836,18 @@
       if (form) form.reset();
       openModal("contact");
     }
+    if (action === "lang") {
+      const panel = document.getElementById("lang-panel");
+      const open = panel.hidden;
+      closeAccount();
+      panel.hidden = !open;
+      button.setAttribute("aria-expanded", String(open));
+    }
+    if (action === "set-lang" && window.I18N) I18N.set(button.dataset.lang);
     if (action === "account") {
       const panel = document.getElementById("account-panel");
       const open = panel.hidden;
+      closeLang();
       panel.hidden = !open;
       button.setAttribute("aria-expanded", String(open));
     }
@@ -933,22 +963,23 @@
     const form = event.target;
     const button = form.querySelector("button[type=submit]");
     button.disabled = true;
-    button.textContent = "Redirecting…";
+    button.textContent = t("checkout.redirect");
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          lang: window.I18N ? I18N.lang : "en",
           items: cart.map((item) => ({ raceId: item.raceId, tierId: item.tierId, qty: item.qty })),
         }),
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok || !payload.url) throw new Error(payload.error || "Checkout failed.");
+      if (!response.ok || !payload.url) throw new Error(payload.error || t("checkout.fail"));
       location.href = payload.url;
     } catch (error) {
       button.disabled = false;
-      button.textContent = "Place order";
-      toast(error instanceof Error ? error.message : "Checkout failed.");
+      button.textContent = t("basket.place");
+      toast(error instanceof Error ? error.message : t("checkout.fail"));
     }
   });
 
@@ -981,7 +1012,7 @@
     });
     localStorage.setItem("apex-contact", JSON.stringify(list));
     const reply = document.querySelector("[data-contact-reply]");
-    if (reply) reply.textContent = `We will reply to ${email}.`;
+    if (reply) reply.textContent = t("contact.reply", { email });
     event.currentTarget.reset();
     event.currentTarget.classList.add("hidden");
     document.querySelector("[data-contact-success]").classList.remove("hidden");
@@ -990,6 +1021,7 @@
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       closeAccount();
+      closeLang();
       closeModals();
     }
   });
@@ -1028,9 +1060,9 @@
     if (wallet) wallet.hidden = true;
     if (!lead) return;
     lead.classList.remove("is-account");
-    lead.querySelector(".booking-kicker").textContent = "Your order";
-    lead.querySelector("h1").textContent = "Retrieve booking";
-    lead.querySelector("p:last-of-type").textContent = "Open your tickets with the email from the payment and the password sent after payment.";
+    lead.querySelector(".booking-kicker").textContent = t("book.kicker");
+    lead.querySelector("h1").textContent = t("book.title");
+    lead.querySelector("p:last-of-type").textContent = t("book.lead");
   }
 
   function dayStamp(iso) {
@@ -1050,7 +1082,7 @@
     let state = "upcoming";
     if (today > race) state = "closed";
     else if (today >= opens) state = "ready";
-    const label = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(opens);
+    const label = new Intl.DateTimeFormat(window.I18N ? I18N.locale : "en-GB", { day: "numeric", month: "short", year: "numeric" }).format(opens);
     return { state, opens: label };
   }
 
@@ -1066,15 +1098,15 @@
     const issued = gates.some((gate, index) => gate.state === "ready" && tickets[index].code);
     const tone = /cancel|refund|fail/i.test(payload.status || "") ? "is-stop" : /pending|hold/i.test(payload.status || "") ? "is-wait" : "";
     lead.classList.add("is-account");
-    lead.querySelector(".booking-kicker").textContent = "Account";
-    lead.querySelector("h1").textContent = "Your tickets";
+    lead.querySelector(".booking-kicker").textContent = t("book.account");
+    lead.querySelector("h1").textContent = t("book.yours");
     lead.querySelector("p:last-of-type").textContent = email;
     const cards = tickets.map((ticket, index) => {
       const gate = gates[index];
       const ready = gate.state === "ready" && ticket.code && typeof qrSvg === "function";
       const stub = ready
         ? `<div class="pass__qr">${qrSvg(ticket.code)}</div>`
-        : `<div class="pass__wait"><p>${gate.state === "closed" ? "Closed" : gate.state === "unpaid" ? "After payment" : "Opens"}</p><strong>${esc(gate.state === "upcoming" ? gate.opens : gate.state === "closed" ? "Event finished" : gate.state === "unpaid" ? "Pay to unlock" : "")}</strong></div>`;
+        : `<div class="pass__wait"><p>${gate.state === "closed" ? t("pass.closed") : gate.state === "unpaid" ? t("pass.after") : t("pass.opens")}</p><strong>${esc(gate.state === "upcoming" ? gate.opens : gate.state === "closed" ? t("pass.finished") : gate.state === "unpaid" ? t("pass.unlock") : "")}</strong></div>`;
       const raw = String(ready ? ticket.code : ticket.id || "");
       const split = raw.lastIndexOf(".");
       const serial = split > 0 ? raw.slice(0, split) : raw;
@@ -1083,44 +1115,51 @@
         <div class="pass__spine" aria-hidden="true"></div>
         <div class="pass__body">
           <div class="pass__top">
-            <p class="pass__kicker">Admit one</p>
-            <p class="pass__index">${index + 1} of ${tickets.length}</p>
+            <p class="pass__kicker">${t("pass.admit")}</p>
+            <p class="pass__index">${t("pass.of", { i: index + 1, n: tickets.length })}</p>
           </div>
           <h2>${esc(ticket.event)}</h2>
           <p class="pass__cat">${esc(ticket.category)}</p>
           <dl class="pass__meta">
-            <div><dt>Weekend</dt><dd>${esc(ticket.when || "—")}</dd></div>
-            <div><dt>Holder</dt><dd>${esc(email)}</dd></div>
+            <div><dt>${t("pass.weekend")}</dt><dd>${esc(ticket.when || "—")}</dd></div>
+            <div><dt>${t("pass.holder")}</dt><dd>${esc(email)}</dd></div>
           </dl>
           <p class="pass__code"><span>${esc(serial)}</span>${check ? `<span>${esc(check)}</span>` : ""}</p>
         </div>
         <div class="pass__stub">${stub}</div>
       </article>`;
     }).join("");
-    const note = issued
-      ? "Show one open pass per person at the gate. The QR is valid for this order only."
-      : "E-tickets open 10 days before the weekend and stay valid through race day.";
+    const note = issued ? t("pass.noteOpen") : t("pass.noteWait");
+    const statusKey = {
+      pending: "status.pending",
+      processing: "status.paid",
+      completed: "status.confirmed",
+      "on-hold": "status.hold",
+      cancelled: "status.cancelled",
+      refunded: "status.refunded",
+      failed: "status.failed",
+    }[payload.status];
     wallet.innerHTML = `
       <section class="account-card">
         <div class="account-card__top">
           <div class="account-card__id">
-            <p>${esc(payload.reference || "Order")}</p>
-            <span class="booking-pill ${tone}">${esc(payload.statusLabel || "Booking")}</span>
+            <p>${esc(payload.reference || t("pass.order"))}</p>
+            <span class="booking-pill ${tone}">${esc(statusKey ? t(statusKey) : payload.statusLabel || t("pass.booking"))}</span>
           </div>
           <div class="wallet-actions">
-            ${issued ? `<button type="button" data-action="tickets-print">Print</button>` : ""}
-            <button type="button" data-action="tickets-other">Another order</button>
-            <button type="button" data-action="tickets-out">Sign out</button>
+            ${issued ? `<button type="button" data-action="tickets-print">${t("pass.print")}</button>` : ""}
+            <button type="button" data-action="tickets-other">${t("pass.other")}</button>
+            <button type="button" data-action="tickets-out">${t("pass.out")}</button>
           </div>
         </div>
         <dl class="account-facts">
-          <div><dt>Passes</dt><dd>${tickets.length}</dd></div>
-          <div><dt>Total</dt><dd>${esc(payload.total || "—")}</dd></div>
-          <div><dt>Placed</dt><dd>${esc(payload.placed || "—")}</dd></div>
+          <div><dt>${t("pass.passes")}</dt><dd>${tickets.length}</dd></div>
+          <div><dt>${t("pass.total")}</dt><dd>${esc(payload.total || "—")}</dd></div>
+          <div><dt>${t("pass.placed")}</dt><dd>${esc(payload.placed || "—")}</dd></div>
         </dl>
       </section>
-      <h2 class="account-label">Passes</h2>
-      <div class="pass-list">${cards || `<p class="pass-note">This order has no tickets on it.</p>`}</div>
+      <h2 class="account-label">${t("pass.passes")}</h2>
+      <div class="pass-list">${cards || `<p class="pass-note">${t("pass.none")}</p>`}</div>
       <p class="pass-note">${note}</p>`;
   }
 
@@ -1139,7 +1178,7 @@
       return;
     }
     if (submit) submit.disabled = true;
-    result.textContent = "Looking up…";
+    result.textContent = t("book.looking");
     try {
       const response = await fetch("/api/booking", {
         method: "POST",
@@ -1147,11 +1186,11 @@
         body: JSON.stringify({ email, password }),
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "No booking matches that email and password.");
+      if (!response.ok) throw new Error(payload.error || t("book.miss"));
       rememberBooking(email, payload);
     } catch (error) {
       showBookingLookup();
-      result.innerHTML = `<p class="booking-miss">${esc(error instanceof Error ? error.message : "No booking matches that email and password.")}</p>`;
+      result.innerHTML = `<p class="booking-miss">${esc(error instanceof Error ? error.message : t("book.miss"))}</p>`;
     } finally {
       if (submit) submit.disabled = false;
     }
@@ -1172,7 +1211,7 @@
     if (params.get("paid") === "1") {
       const lead = document.getElementById("booking-lead");
       const copy = lead && lead.querySelector("p:last-of-type");
-      if (copy && params.get("demo") !== "1" && !saved) copy.textContent = "Payment received. The password is in the confirmation email.";
+      if (copy && params.get("demo") !== "1" && !saved) copy.textContent = t("book.paidNote");
     }
   }
 
@@ -1205,8 +1244,8 @@
       const clubs = (race.tickets || []).filter((ticket) => ticket.kind === "club").slice().sort((a, b) => a.price - b.price);
       const names = clubs.slice(0, 3).map((ticket) => ticket.name);
       const extra = clubs.length - names.length;
-      const from = clubs.length ? `From ${euro(clubs[0].price)}` : "On request";
-      const packs = names.length ? `${names.join(" · ")}${extra > 0 ? ` · +${extra}` : ""}` : "Paddock Club and local suites";
+      const from = clubs.length ? t("card.from", { price: euro(clubs[0].price) }) : t("hosp.request");
+      const packs = names.length ? `${names.join(" · ")}${extra > 0 ? ` · +${extra}` : ""}` : t("hosp.fallback");
       const title = editions[race.id] || "Paddock Club";
       return `<article class="tcard" style="--i:${index}">
         <button class="tcard__media" type="button" data-action="hosp-packs" data-race="${race.id}" aria-label="${race.country}">
@@ -1221,11 +1260,11 @@
         <h3><button type="button" data-action="hosp-packs" data-race="${race.id}">${title}</button></h3>
         <button class="tcard__circuit" type="button" data-action="hosp-packs" data-race="${race.id}">${packs}</button>
         <div class="tcard__foot">
-          <button class="button" type="button" data-action="hosp-packs" data-race="${race.id}">View packages</button>
-          <button class="see-more" type="button" data-action="hosp-packs" data-race="${race.id}">See more →</button>
+          <button class="button" type="button" data-action="hosp-packs" data-race="${race.id}">${t("hosp.view")}</button>
+          <button class="see-more" type="button" data-action="hosp-packs" data-race="${race.id}">${t("card.more")}</button>
         </div>
       </article>`;
-    }).join("") || `<p class="empty">No round in this programme.</p>`;
+    }).join("") || `<p class="empty">${t("hosp.noneRound")}</p>`;
   }
 
   const packsByKind = {
@@ -1237,12 +1276,12 @@
     suite: ["restaurant", "dine-room", "dine-dark", "beach", "pool", "terrace"],
   };
   const packNotes = {
-    track: "The suite above the garages",
-    view: "A box looking over the track",
-    dining: "Three courses through the day",
-    water: "On the water beside the circuit",
-    lounge: "A lounge or terrace at the circuit",
-    suite: "A private suite for the weekend",
+    track: "pack.track",
+    view: "pack.view",
+    dining: "pack.dining",
+    water: "pack.water",
+    lounge: "pack.lounge",
+    suite: "pack.suite",
   };
 
   function packKind(name) {
@@ -1266,7 +1305,7 @@
 
   function packLook(name, raceId, tierId, used) {
     if (/paddock/i.test(name)) {
-      return { img: "assets/hosp/entrance.webp?v=spot57", note: packNotes.track };
+      return { img: "assets/hosp/entrance.webp?v=spot57", note: t(packNotes.track) };
     }
     const kind = packKind(name);
     const list = /house 44|pitstop|pit stop|pitlane|pit lane/i.test(name)
@@ -1284,11 +1323,11 @@
       const id = list[(start + step) % list.length];
       if (!used.has(id)) {
         used.add(id);
-        return { img: `assets/hosp/${id}.webp?v=spot57`, note: packNotes[kind] };
+        return { img: `assets/hosp/${id}.webp?v=spot57`, note: t(packNotes[kind]) };
       }
     }
     const id = list[start % list.length];
-    return { img: `assets/hosp/${id}.webp?v=spot57`, note: packNotes[kind] };
+    return { img: `assets/hosp/${id}.webp?v=spot57`, note: t(packNotes[kind]) };
   }
 
   function openPacks(raceId) {
@@ -1317,12 +1356,12 @@
               </div>
               <div class="pack-card__buy">
                 <b>${euro(ticket.price)}</b>
-                <button class="button" type="button" data-action="hosp-add" data-race="${race.id}" data-tier="${ticket.id}">Add to cart</button>
+                <button class="button" type="button" data-action="hosp-add" data-race="${race.id}" data-tier="${ticket.id}">${t("pack.add")}</button>
               </div>
             </div>
           </article>`;
         }).join("")
-      : `<p class="empty">No hospitality package is on sale for this round.</p>`;
+      : `<p class="empty">${t("pack.empty")}</p>`;
     openModal("hosp-pack");
   }
 
@@ -1352,4 +1391,5 @@
   renderStandings();
   renderHospitality();
   bindHospCompare();
+  document.documentElement.classList.add("i18n-ready");
 })();

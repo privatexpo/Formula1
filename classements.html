@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,21 +7,21 @@
   <meta name="description" content="2027 Formula 1 driver and constructor standings.">
   <link rel="icon" href="favicon.svg?v=f1red" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="css/theme.css?v=tickets19">
+  <link rel="stylesheet" href="css/theme.css?v=tickets20">
 </head>
-<body data-page="standings">
+<body data-page="standings" data-title="title.standings">
   <header class="site-header" id="header"></header>
   <main id="contenu">
     <div class="container page-intro">
-      <h1 class="page-title">Classements</h1>
-      <p>Présentation seulement. Les points ne reflètent pas le championnat réel.</p>
+      <h1 class="page-title" data-i18n="stand.title">Standings</h1>
+      <p data-i18n="stand.lead">Display only. The points are not the real championship.</p>
     </div>
     <section class="section" style="padding-top:12px">
       <div class="container">
-        <div class="notice" style="margin-bottom:16px">Classement fictif, affiché pour montrer la grille, les barres d’écurie et la typographie du thème.</div>
+        <div class="notice" style="margin-bottom:16px" data-i18n="stand.notice">A sample table, shown for the grid, the team bars and the type.</div>
         <div class="tabs">
-          <button class="chip" type="button" data-action="tab" data-tab="drivers" aria-pressed="true">Pilotes</button>
-          <button class="chip" type="button" data-action="tab" data-tab="teams">Constructeurs</button>
+          <button class="chip" type="button" data-action="tab" data-tab="drivers" aria-pressed="true" data-i18n="stand.drivers">Drivers</button>
+          <button class="chip" type="button" data-action="tab" data-tab="teams" data-i18n="stand.teams">Constructors</button>
         </div>
         <div class="table" id="standings-table"></div>
       </div>
@@ -29,6 +29,7 @@
   </main>
   <footer class="site-footer" id="footer"></footer>
   <script src="js/data.js?v=prices70"></script>
-  <script src="js/site.js?v=tickets19"></script>
+  <script src="js/i18n.js?v=lang3"></script>
+  <script src="js/site.js?v=tickets21"></script>
 </body>
 </html>

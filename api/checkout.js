@@ -1,3 +1,4 @@
+const i18n = require("../js/i18n");
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
@@ -54,7 +55,7 @@ async function wc(pathname, init) {
   return text ? JSON.parse(text) : {};
 }
 
-async function byteqsSession(lines, order) {
+async function byteqsSession(lines, order, lang) {
   if (!BYTEQS_SECRET) throw new Error("BYTEQS_SECRET_KEY is missing.");
   const reference = order ? `F1-${order.id}` : `F1-DIRECT-${Date.now()}`;
   const payload = {
@@ -62,7 +63,7 @@ async function byteqsSession(lines, order) {
     cancelUrl: `${SITE}/basket.html`,
     currency: "EUR",
     clientReferenceId: reference,
-    metadata: { reference, ...(order ? { wooId: String(order.id) } : {}) },
+    metadata: { reference, lang, ...(order ? { wooId: String(order.id) } : {}) },
     lineItems: lines.map((line) => ({
       name: line.name.slice(0, 180),
       amountInCents: line.amountInCents,
@@ -97,7 +98,7 @@ async function byteqsSession(lines, order) {
   return data.checkoutUrl;
 }
 
-async function wooOrder(lines) {
+async function wooOrder(lines, lang) {
   try {
     return await wc("/orders", {
       method: "POST",
@@ -119,7 +120,10 @@ async function wooOrder(lines) {
             { key: "_f1_qty", value: String(line.qty) },
           ],
         })),
-        meta_data: [{ key: "_origine", value: "f1-tickets" }],
+        meta_data: [
+          { key: "_origine", value: "f1-tickets" },
+          { key: "_f1_lang", value: lang },
+        ],
       }),
     });
   } catch {
@@ -134,6 +138,7 @@ module.exports = async function handler(req, res) {
   }
   try {
     const body = await bodyOf(req);
+    const lang = i18n.normalize(body.lang);
     const items = Array.isArray(body.items) ? body.items : [];
     if (!items.length || items.length > 24) {
       res.status(400).json({ error: "The basket is empty." });
@@ -157,9 +162,9 @@ module.exports = async function handler(req, res) {
       };
     });
     const expected = lines.reduce((sum, line) => sum + Number(line.total), 0).toFixed(2);
-    const created = await wooOrder(lines);
+    const created = await wooOrder(lines, lang);
     const order = created && Number(created.total).toFixed(2) === expected ? created : null;
-    const url = await byteqsSession(lines, order);
+    const url = await byteqsSession(lines, order, lang);
     res.status(200).json({ url });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Checkout failed.";

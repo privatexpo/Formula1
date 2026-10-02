@@ -7,9 +7,9 @@
   <meta name="description" content="2027 Formula 1 hospitality: Paddock Club, Special Edition and local suites.">
   <link rel="icon" href="favicon.svg?v=f1red" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="css/theme.css?v=tickets19">
+  <link rel="stylesheet" href="css/theme.css?v=tickets20">
 </head>
-<body data-page="hospitality">
+<body data-page="hospitality" data-title="title.hospitality">
   <header class="site-header" id="header"></header>
   <main id="contenu">
     <section class="hero hosp-hero" aria-label="Hospitality">
@@ -17,10 +17,10 @@
         <source src="assets/hospitality.mp4?v=1" type="video/mp4">
       </video>
       <div class="hero-inner">
-        <h1>Experience the<br>extraordinary trackside</h1>
-        <p class="hero-copy">Be at the heart of every battle, every pit stop, every championship-defining decision.</p>
+        <h1 data-i18n-html="hosp.heroTitle">Experience the<br>extraordinary trackside</h1>
+        <p class="hero-copy" data-i18n="hosp.heroCopy">Be at the heart of every battle, every pit stop, every championship-defining decision.</p>
         <div class="hero-actions">
-          <a class="button button--light" href="#hosp-calendar">Secure your place <span aria-hidden="true">→</span></a>
+          <a class="button button--light" href="#hosp-calendar"><span data-i18n="hosp.cta">Secure your place</span> <span aria-hidden="true">→</span></a>
         </div>
       </div>
     </section>
@@ -28,19 +28,19 @@
     <section class="hosp-stage" id="hosp-calendar">
       <div class="container hosp-immerse">
         <div class="hosp-immerse__copy">
-          <h2><em>Immerse yourself</em>In the world<br>of Formula 1®</h2>
-          <p>Each Formula 1® Grand Prix is defined by its own character. From glamorous street circuits to modern sporting spectacles, every race weekend is shaped by a distinctive blend of culture, atmosphere and energy. Reflecting this diversity, our collection of hospitality experiences offers distinctive ways to experience Formula 1® at its most exclusive. From the iconic F1 Paddock Club™ to the immersive access of the F1 Garage, each experience delivers a level of access and insight reserved for the few. Wherever you choose to attend, discover a level of access, service and experience that transforms a Grand Prix weekend into something truly exceptional.</p>
+          <h2 data-i18n-html="hosp.immerseTitle"><em>Immerse yourself</em>In the world<br>of Formula 1®</h2>
+          <p data-i18n="hosp.immerse">Each Formula 1® Grand Prix is defined by its own character. From glamorous street circuits to modern sporting spectacles, every race weekend is shaped by a distinctive blend of culture, atmosphere and energy. Reflecting this diversity, our collection of hospitality experiences offers distinctive ways to experience Formula 1® at its most exclusive. From the iconic F1 Paddock Club™ to the immersive access of the F1 Garage, each experience delivers a level of access and insight reserved for the few. Wherever you choose to attend, discover a level of access, service and experience that transforms a Grand Prix weekend into something truly exceptional.</p>
         </div>
         <img src="assets/hospitality-immerse.webp" alt="Guests on a walkway above the Formula 1 cars." width="800" height="533">
       </div>
       <div class="container hosp-choose">
-        <h2><em>Hospitality</em>Choose your Grand Prix<sup>TM</sup></h2>
-        <p class="hosp-script">Choose your experience</p>
+        <h2 data-i18n-html="hosp.chooseTitle"><em>Hospitality</em>Choose your Grand Prix<sup>TM</sup></h2>
+        <p class="hosp-script" data-i18n="hosp.script">Choose your experience</p>
         <div class="hosp-filters" role="tablist" aria-label="Hospitality programme">
-          <button class="region-btn" type="button" data-action="hosp-filter" data-filter="all" aria-pressed="true">All</button>
-          <button class="region-btn" type="button" data-action="hosp-filter" data-filter="paddock" aria-pressed="false">Paddock Club</button>
-          <button class="region-btn" type="button" data-action="hosp-filter" data-filter="edition" aria-pressed="false">Special Edition</button>
-          <button class="region-btn" type="button" data-action="hosp-filter" data-filter="local" aria-pressed="false">Local</button>
+          <button class="region-btn" type="button" data-action="hosp-filter" data-filter="all" aria-pressed="true" data-i18n="hosp.all">All</button>
+          <button class="region-btn" type="button" data-action="hosp-filter" data-filter="paddock" aria-pressed="false" data-i18n="hosp.paddock">Paddock Club</button>
+          <button class="region-btn" type="button" data-action="hosp-filter" data-filter="edition" aria-pressed="false" data-i18n="hosp.edition">Special Edition</button>
+          <button class="region-btn" type="button" data-action="hosp-filter" data-filter="local" aria-pressed="false" data-i18n="hosp.local">Local</button>
         </div>
       </div>
     </section>
@@ -53,44 +53,44 @@
 
     <section class="section hosp-included">
       <div class="container">
-        <h2 class="hosp-heading">What is included</h2>
+        <h2 class="hosp-heading" data-i18n="hosp.included">What is included</h2>
         <div class="hosp-table" role="table">
           <div class="hosp-col hosp-col--label">
-            <span role="columnheader">Included</span>
-            <span role="rowheader">Where you watch</span>
-            <span role="rowheader">Dining</span>
-            <span role="rowheader">Pit lane walk</span>
-            <span role="rowheader">Track tour</span>
-            <span role="rowheader">Driver talks</span>
-            <span role="rowheader">On the calendar</span>
+            <span role="columnheader" data-i18n="hosp.colIncluded">Included</span>
+            <span role="rowheader" data-i18n="hosp.where">Where you watch</span>
+            <span role="rowheader" data-i18n="hosp.dining">Dining</span>
+            <span role="rowheader" data-i18n="hosp.pit">Pit lane walk</span>
+            <span role="rowheader" data-i18n="hosp.tour">Track tour</span>
+            <span role="rowheader" data-i18n="hosp.talks">Driver talks</span>
+            <span role="rowheader" data-i18n="hosp.onCal">On the calendar</span>
           </div>
           <div class="hosp-track">
             <div class="hosp-col">
-              <span role="columnheader">Paddock Club</span>
-              <span>Above the garages</span>
-              <span>Three courses, all day</span>
-              <span>Yes</span>
-              <span>Yes</span>
-              <span>Yes</span>
-              <span>All 24 Grands Prix</span>
+              <span role="columnheader" data-i18n="hosp.paddock">Paddock Club</span>
+              <span data-i18n="hosp.above">Above the garages</span>
+              <span data-i18n="hosp.three">Three courses, all day</span>
+              <span data-i18n="hosp.yes">Yes</span>
+              <span data-i18n="hosp.yes">Yes</span>
+              <span data-i18n="hosp.yes">Yes</span>
+              <span data-i18n="hosp.all24">All 24 Grands Prix</span>
             </div>
             <div class="hosp-col">
-              <span role="columnheader">Special Edition</span>
-              <span>A dedicated pop-up</span>
-              <span>The chef or house for that edition</span>
-              <span>On House 44 and the paddock pop-up</span>
-              <span>On House 44</span>
-              <span>Appearances vary</span>
-              <span>Six rounds in 2027</span>
+              <span role="columnheader" data-i18n="hosp.edition">Special Edition</span>
+              <span data-i18n="hosp.pop">A dedicated pop-up</span>
+              <span data-i18n="hosp.chef">The chef or house for that edition</span>
+              <span data-i18n="hosp.house44">On House 44 and the paddock pop-up</span>
+              <span data-i18n="hosp.onHouse">On House 44</span>
+              <span data-i18n="hosp.vary">Appearances vary</span>
+              <span data-i18n="hosp.six">Six rounds in 2027</span>
             </div>
             <div class="hosp-col">
-              <span role="columnheader">Local</span>
-              <span>Circuit lounge or terrace</span>
-              <span>Set by the promoter</span>
-              <span>Only on selected suites</span>
-              <span>Rare</span>
-              <span>When the suite lists them</span>
-              <span>Wherever the promoter opens a suite</span>
+              <span role="columnheader" data-i18n="hosp.local">Local</span>
+              <span data-i18n="hosp.lounge">Circuit lounge or terrace</span>
+              <span data-i18n="hosp.promoter">Set by the promoter</span>
+              <span data-i18n="hosp.selected">Only on selected suites</span>
+              <span data-i18n="hosp.rare">Rare</span>
+              <span data-i18n="hosp.whenListed">When the suite lists them</span>
+              <span data-i18n="hosp.wherever">Wherever the promoter opens a suite</span>
             </div>
           </div>
         </div>
@@ -101,6 +101,7 @@
   </main>
   <footer class="site-footer" id="footer"></footer>
   <script src="js/data.js?v=prices70"></script>
-  <script src="js/site.js?v=tickets19"></script>
+  <script src="js/i18n.js?v=lang3"></script>
+  <script src="js/site.js?v=tickets21"></script>
 </body>
 </html>

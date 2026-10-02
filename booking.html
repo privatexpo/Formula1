@@ -7,41 +7,41 @@
   <meta name="description" content="Open a 2027 Formula 1 booking with the email and the password sent after payment.">
   <link rel="icon" href="favicon.svg?v=f1red" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="css/theme.css?v=tickets19">
+  <link rel="stylesheet" href="css/theme.css?v=tickets20">
 </head>
-<body data-page="booking">
+<body data-page="booking" data-title="title.booking">
   <header class="site-header" id="header"></header>
   <main id="contenu">
     <div class="booking-wrap">
       <header class="booking-lead" id="booking-lead">
-        <p class="booking-kicker">Your order</p>
-        <h1>Retrieve booking</h1>
-        <p>Open your tickets with the email from the payment and the password sent after payment.</p>
+        <p class="booking-kicker" data-i18n="book.kicker">Your order</p>
+        <h1 data-i18n="book.title">Retrieve booking</h1>
+        <p data-i18n="book.lead">Open your tickets with the email from the payment and the password sent after payment.</p>
       </header>
       <div id="booking-lookup" class="booking-grid">
         <div class="booking-card">
           <form id="retrieve-form">
-            <label>Email<input name="email" type="email" required autocomplete="email" placeholder="name@email.com"></label>
-            <label>Password<input name="password" type="password" required autocomplete="current-password" placeholder="Password from the email"></label>
-            <p class="booking-hint">The password is in the confirmation email. It is not the order number.</p>
-            <button class="button" type="submit">Open tickets</button>
+            <label><span data-i18n="contact.email">Email</span><input name="email" type="email" required autocomplete="email" placeholder="name@email.com"></label>
+            <label><span data-i18n="book.password">Password</span><input name="password" type="password" required autocomplete="current-password" data-i18n-placeholder="book.passwordPh" placeholder="Password from the email"></label>
+            <p class="booking-hint" data-i18n="book.hint">The password is in the confirmation email. It is not the order number.</p>
+            <button class="button" type="submit" data-i18n="book.open">Open tickets</button>
           </form>
           <div data-retrieve-result></div>
         </div>
         <aside class="booking-aside">
-          <h2>What you need</h2>
+          <h2 data-i18n="book.need">What you need</h2>
           <ol>
-            <li>The email entered on the payment page.</li>
-            <li>The password in the confirmation email.</li>
+            <li data-i18n="book.need1">The email entered on the payment page.</li>
+            <li data-i18n="book.need2">The password in the confirmation email.</li>
           </ol>
-          <h2>What you will see</h2>
+          <h2 data-i18n="book.see">What you will see</h2>
           <ul>
-            <li>Whether the order is awaiting payment, paid, or cancelled.</li>
-            <li>One e-ticket per person. The QR opens 10 days before the weekend.</li>
-            <li>The same passes the next time you open My tickets on this device.</li>
+            <li data-i18n="book.see1">Whether the order is awaiting payment, paid, or cancelled.</li>
+            <li data-i18n="book.see2">One e-ticket per person. The QR opens 10 days before the weekend.</li>
+            <li data-i18n="book.see3">The same passes the next time you open My tickets on this device.</li>
           </ul>
-          <p>Both fields have to match the same order. A wrong password returns no booking, even if the email is right.</p>
-          <button type="button" data-action="contact">Contact us</button>
+          <p data-i18n="book.match">Both fields have to match the same order. A wrong password returns no booking, even if the email is right.</p>
+          <button type="button" data-action="contact" data-i18n="nav.contact">Contact us</button>
         </aside>
       </div>
       <div id="booking-wallet" class="ticket-wallet" hidden></div>
@@ -50,6 +50,7 @@
   <footer class="site-footer" id="footer"></footer>
   <script src="js/data.js?v=prices70"></script>
   <script src="js/qr.js?v=tickets1"></script>
-  <script src="js/site.js?v=tickets19"></script>
+  <script src="js/i18n.js?v=lang3"></script>
+  <script src="js/site.js?v=tickets21"></script>
 </body>
 </html>

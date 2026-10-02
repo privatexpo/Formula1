@@ -7,31 +7,31 @@
   <meta name="description" content="Preview of the two emails sent after a Formula 1 ticket payment.">
   <link rel="icon" href="favicon.svg?v=f1red" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="css/theme.css?v=tickets19">
+  <link rel="stylesheet" href="css/theme.css?v=tickets20">
 </head>
-<body data-page="mail">
+<body data-page="mail" data-title="title.mail">
   <header class="site-header" id="header"></header>
   <main id="contenu">
     <div class="mail-preview">
-      <p class="mail-preview__note">Preview of the two emails sent after payment.</p>
-      <p class="mail-preview__label">Tickets</p>
+      <p class="mail-preview__note" data-i18n="mail.preview">Preview of the two emails sent after payment.</p>
+      <p class="mail-preview__label" data-i18n="mail.ticketsLabel">Tickets</p>
       <article class="inbox">
         <header class="inbox__head">
-          <p><span>From</span> Formula 1 Tickets</p>
-          <p><span>To</span> alex@example.com</p>
-          <p><span>Subject</span> Your tickets are confirmed — F1-1042</p>
+          <p><span data-i18n="mail.from">From</span> Formula 1 Tickets</p>
+          <p><span data-i18n="mail.to">To</span> alex@example.com</p>
+          <p><span data-i18n="mail.subject">Subject</span> <span data-i18n-fill="mail.ticketsSubject" data-i18n-vars='{"ref":"F1-1042"}'>Your tickets are confirmed — F1-1042</span></p>
         </header>
         <div class="letter">
           <div class="letter__mast">
             <img src="assets/f1-tickets-logo.svg?v=hd1" alt="F1 Tickets" height="22">
           </div>
-          <p class="letter__kicker">Payment confirmed</p>
-          <h1>Your tickets</h1>
-          <p class="letter__lead">Order F1-1042 is paid. Use the password below with this email address to open your passes.</p>
-          <p class="letter__label">Password</p>
+          <p class="letter__kicker" data-i18n="mail.kickerPay">Payment confirmed</p>
+          <h1 data-i18n="mail.yourTickets">Your tickets</h1>
+          <p class="letter__lead" data-i18n-fill="mail.leadTickets" data-i18n-vars='{"ref":"F1-1042"}'>Order F1-1042 is paid. Use the password below with this email address to open your passes.</p>
+          <p class="letter__label" data-i18n="mail.password">Password</p>
           <p class="letter__code">K7NP-4RQM</p>
-          <a class="button" href="booking.html">Open my tickets</a>
-          <p class="letter__note">Your QR code appears on each pass 10 days before the weekend and remains valid through race day. Keep this password safe — you will need it to open your tickets.</p>
+          <a class="button" href="booking.html" data-i18n="mail.open">Open my tickets</a>
+          <p class="letter__note" data-i18n="mail.qr">Your QR code appears on each pass 10 days before the weekend and remains valid through race day. Keep this password safe — you will need it to open your tickets.</p>
         </div>
         <p class="letter__support">
           <span class="letter__mark"><img src="assets/icon-mail.svg" alt=""></span>
@@ -39,37 +39,37 @@
         </p>
         <p class="letter__sign">© 2026 FEVER</p>
       </article>
-      <p class="mail-preview__label">Receipt</p>
+      <p class="mail-preview__label" data-i18n="mail.receiptLabel">Receipt</p>
       <article class="inbox">
         <header class="inbox__head">
-          <p><span>From</span> Formula 1 Tickets</p>
-          <p><span>To</span> alex@example.com</p>
-          <p><span>Subject</span> Your receipt — F1-1042</p>
+          <p><span data-i18n="mail.from">From</span> Formula 1 Tickets</p>
+          <p><span data-i18n="mail.to">To</span> alex@example.com</p>
+          <p><span data-i18n="mail.subject">Subject</span> <span data-i18n-fill="mail.receiptSubject" data-i18n-vars='{"ref":"F1-1042"}'>Your receipt — F1-1042</span></p>
         </header>
         <div class="letter">
           <div class="letter__mast">
             <img src="assets/f1-tickets-logo.svg?v=hd1" alt="F1 Tickets" height="22">
           </div>
-          <p class="letter__kicker">Invoice</p>
-          <h1>Your receipt</h1>
-          <p class="letter__lead">Keep this email. It is the receipt for your order. Your passes are in a separate message.</p>
+          <p class="letter__kicker" data-i18n="mail.kickerInvoice">Invoice</p>
+          <h1 data-i18n="mail.yourReceipt">Your receipt</h1>
+          <p class="letter__lead" data-i18n="mail.leadReceipt">Keep this email. It is the receipt for your order. Your passes are in a separate message.</p>
           <div class="receipt">
             <dl class="receipt__meta">
-              <div><dt>Order</dt><dd>F1-1042</dd></div>
-              <div><dt>Date</dt><dd>1 October 2026</dd></div>
-              <div><dt>Status</dt><dd><span class="receipt__paid">Paid</span></dd></div>
+              <div><dt data-i18n="mail.order">Order</dt><dd>F1-1042</dd></div>
+              <div><dt data-i18n="mail.date">Date</dt><dd>1 October 2026</dd></div>
+              <div><dt data-i18n="mail.status">Status</dt><dd><span class="receipt__paid" data-i18n="mail.paid">Paid</span></dd></div>
             </dl>
-            <p class="receipt__bill">Billed to <b>alex@example.com</b></p>
+            <p class="receipt__bill"><span data-i18n="mail.billed">Billed to</span> <b>alex@example.com</b></p>
             <table class="receipt__table">
               <thead>
-                <tr><th>Description</th><th>Qty</th></tr>
+                <tr><th data-i18n="mail.description">Description</th><th data-i18n="mail.qty">Qty</th></tr>
               </thead>
               <tbody>
                 <tr><td>Bahrain — General admission</td><td>2</td></tr>
                 <tr><td>Monaco — Paddock Club</td><td>1</td></tr>
               </tbody>
             </table>
-            <p class="receipt__sum"><span>Total paid</span><strong>2 422,00 €</strong></p>
+            <p class="receipt__sum"><span data-i18n="mail.totalPaid">Total paid</span><strong>2 422,00 €</strong></p>
           </div>
         </div>
         <p class="letter__support">
@@ -82,6 +82,7 @@
   </main>
   <footer class="site-footer" id="footer"></footer>
   <script src="js/data.js?v=prices70"></script>
-  <script src="js/site.js?v=tickets19"></script>
+  <script src="js/i18n.js?v=lang3"></script>
+  <script src="js/site.js?v=tickets21"></script>
 </body>
 </html>

@@ -7,14 +7,14 @@
   <meta name="description" content="2027 race calendar.">
   <link rel="icon" href="favicon.svg?v=f1red" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="css/theme.css?v=tickets19">
+  <link rel="stylesheet" href="css/theme.css?v=tickets20">
 </head>
-<body data-page="calendar">
+<body data-page="calendar" data-title="title.calendar">
   <header class="site-header" id="header"></header>
   <main id="contenu">
     <section class="calendar-wrap" id="calendar">
       <div class="container page-intro">
-        <h1 class="page-title">Calendar</h1>
+        <h1 class="page-title" data-i18n="cal.title">Calendar</h1>
       </div>
       <div class="container" id="calendar-filters"></div>
       <div class="container">
@@ -23,13 +23,14 @@
             <source src="assets/calendar.mp4" type="video/mp4">
           </video>
         </div>
-        <p class="film-caption">From the first lights in Bahrain to the last lap in Abu Dhabi.</p>
+        <p class="film-caption" data-i18n="home.film">From the first lights in Bahrain to the last lap in Abu Dhabi.</p>
       </div>
       <div class="container" id="calendar-root"></div>
     </section>
   </main>
   <footer class="site-footer" id="footer"></footer>
   <script src="js/data.js?v=prices70"></script>
-  <script src="js/site.js?v=tickets19"></script>
+  <script src="js/i18n.js?v=lang3"></script>
+  <script src="js/site.js?v=tickets21"></script>
 </body>
 </html>

@@ -68,7 +68,7 @@ async function woo(pathname, init) {
   return res.json();
 }
 
-async function markPaid(id, email) {
+async function markPaid(id, email, langHint) {
   const order = await woo(`/orders/${id}`);
   if (!order) return;
   const existing = (order.meta_data || []).find((item) => item.key === "_f1_access");
@@ -88,12 +88,14 @@ async function markPaid(id, email) {
     name: String(line.name || "Ticket"),
     qty: Number(line.quantity || 1),
   }));
+  const stored = (source.meta_data || []).find((item) => item.key === "_f1_lang");
   await mail.send({
     to: email,
     reference: `F1-${id}`,
     password: code,
     lines,
     total: source.total ? `${source.total} ${source.currency || "EUR"}` : "",
+    lang: (stored && stored.value) || langHint || "en",
   });
 }
 
@@ -135,7 +137,7 @@ async function handler(req, res) {
   );
   const match = reference.match(/^F1-(\d+)$/);
   const email = [object, data, body].map((node) => node && (node.customer_email || (node.customer && node.customer.email) || node.receipt_email)).find((value) => typeof value === "string" && value.includes("@"));
-  if (paid && match) await markPaid(match[1], email ? email.trim().toLowerCase() : "");
+  if (paid && match) await markPaid(match[1], email ? email.trim().toLowerCase() : "", meta.lang || "");
   res.status(200).json({ ok: true });
 }
 

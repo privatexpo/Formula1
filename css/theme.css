@@ -78,7 +78,7 @@
 }
 
 :root {
-  --theme-font-stack: "Primary", "Secondary";
+  --theme-font-stack: "Primary", "Secondary", "Hiragino Sans", "PingFang SC", "Noto Sans SC", "Noto Naskh Arabic", "Geeza Pro", sans-serif;
   --red: #e10600;
   --red-hover: #cc2323;
   --carbon: #15151e;
@@ -249,6 +249,53 @@ body[data-page="hospitality"] .tv-mark .tv-for-dark { display: block; }
   place-items: center;
 }
 .cart-badge[hidden] { display: none; }
+.lang-menu { position: relative; }
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  margin-right: 4px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.lang-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: 76px;
+  padding: 8px 0;
+  background: #f4f1ee;
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(21, 21, 30, 0.22);
+}
+.lang-panel[hidden] { display: none; }
+.lang-panel button {
+  display: block;
+  width: 100%;
+  padding: 9px 0;
+  border: 0;
+  background: transparent;
+  color: #15151e;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-align: center;
+  cursor: pointer;
+}
+.lang-panel button:hover,
+.lang-panel button[aria-current="true"] { color: var(--red); }
+html[dir="rtl"] .lang-panel,
+html[dir="rtl"] .account-panel { left: 0; right: auto; }
+html:not(.i18n-ready) body { visibility: hidden; }
 .account-menu { position: relative; }
 .account-panel {
   position: absolute;

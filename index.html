@@ -7,9 +7,9 @@
   <meta name="description" content="2027 Formula 1 tickets. Calendar, grandstands, hospitality and waitlist.">
   <link rel="icon" href="favicon.svg?v=f1red" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="css/theme.css?v=tickets19">
+  <link rel="stylesheet" href="css/theme.css?v=tickets20">
 </head>
-<body data-page="home">
+<body data-page="home" data-title="title.home">
   <header class="site-header" id="header"></header>
   <main id="contenu">
     <section class="hero" id="hero" aria-label="Season tickets"></section>
@@ -21,26 +21,26 @@
             <source src="assets/calendar.mp4" type="video/mp4">
           </video>
         </div>
-        <p class="film-caption">From the first lights in Bahrain to the last lap in Abu Dhabi.</p>
+        <p class="film-caption" data-i18n="home.film">From the first lights in Bahrain to the last lap in Abu Dhabi.</p>
       </div>
       <div class="container" id="calendar-root"></div>
     </section>
     <section class="interest">
       <div class="container">
-        <h2>You could also be interested in</h2>
+        <h2 data-i18n="home.interestTitle">You could also be interested in</h2>
         <div class="interest-grid">
           <a class="interest-card" id="hospitality" href="hospitality.html">
             <video autoplay muted loop playsinline>
               <source src="assets/paddock.mp4?v=1" type="video/mp4">
             </video>
             <div class="interest-copy">
-              <strong>Hospitality</strong>
-              <p>The suite above the garages, from Bahrain to Abu Dhabi.</p>
+              <strong data-i18n="nav.hospitality">Hospitality</strong>
+              <p data-i18n="home.interestCopy">The suite above the garages, from Bahrain to Abu Dhabi.</p>
               <ul class="interest-facts">
-                <li>24 Grands Prix</li>
-                <li>Pit lane walk</li>
-                <li>Three-course dining</li>
-                <li>Track tour</li>
+                <li data-i18n="home.fact1">24 Grands Prix</li>
+                <li data-i18n="home.fact2">Pit lane walk</li>
+                <li data-i18n="home.fact3">Three-course dining</li>
+                <li data-i18n="home.fact4">Track tour</li>
               </ul>
             </div>
           </a>
@@ -50,6 +50,7 @@
   </main>
   <footer class="site-footer" id="footer"></footer>
   <script src="js/data.js?v=prices70"></script>
-  <script src="js/site.js?v=tickets19"></script>
+  <script src="js/i18n.js?v=lang3"></script>
+  <script src="js/site.js?v=tickets21"></script>
 </body>
 </html>
