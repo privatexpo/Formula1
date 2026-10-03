@@ -118,7 +118,7 @@ async function byteqsSession(lines, order, lang, email) {
       }),
     }).catch(() => {});
   }
-  return data.checkoutUrl;
+  return { url: data.checkoutUrl, order };
 }
 
 async function wooOrder(lines, lang, email) {
@@ -192,8 +192,16 @@ module.exports = async function handler(req, res) {
     const expected = lines.reduce((sum, line) => sum + Number(line.total), 0).toFixed(2);
     const created = await wooOrder(lines, lang, email);
     const order = created && Number(created.total).toFixed(2) === expected ? created : null;
-    const url = await byteqsSession(lines, order, lang, email);
-    res.status(200).json({ url });
+    const session = await byteqsSession(lines, order, lang, email);
+    if (session.order && session.order.order_key) {
+      const value = encodeURIComponent(`F1-${session.order.id}|${session.order.order_key}`);
+      res.setHeader("set-cookie", `f1_retour=${value}; Path=/; Max-Age=10800; SameSite=Lax; Secure`);
+    }
+    res.status(200).json({
+      url: session.url,
+      order: session.order ? `F1-${session.order.id}` : "",
+      key: session.order && session.order.order_key ? session.order.order_key : "",
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Checkout failed.";
     res.status(502).json({ error: message.slice(0, 300) });

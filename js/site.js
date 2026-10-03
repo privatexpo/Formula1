@@ -975,6 +975,9 @@
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload.url) throw new Error(payload.error || t("checkout.fail"));
+      if (/^F1-\d+$/.test(payload.order || "")) {
+        sessionStorage.setItem("f1_retour", JSON.stringify({ order: payload.order, key: payload.key || "" }));
+      }
       location.href = payload.url;
     } catch (error) {
       button.disabled = false;
@@ -1209,11 +1212,28 @@
     });
     const params = new URLSearchParams(location.search);
     const saved = savedBooking();
-    const paidOrder = params.get("order") || "";
+    const pending = pendingReturn(params);
     if (params.get("demo") === "1") rememberBooking(DEMO_EMAIL, demoOrder());
-    else if (params.get("paid") === "1" && /^F1-\d+$/.test(paidOrder)) openPaidReturn(paidOrder, params.get("key") || "");
+    else if (pending) openPaidReturn(pending.order, pending.key);
     else if (saved) rememberBooking(saved.email, saved.payload);
-    if (saved) retrieveForm.email.value = saved.email;
+    if (saved && retrieveForm.email) retrieveForm.email.value = saved.email;
+  }
+
+  function pendingReturn(params) {
+    const fromUrl = params.get("order") || "";
+    if (params.get("paid") === "1" && /^F1-\d+$/.test(fromUrl)) {
+      return { order: fromUrl, key: params.get("key") || "" };
+    }
+    try {
+      const stored = JSON.parse(sessionStorage.getItem("f1_retour") || "null");
+      if (stored && /^F1-\d+$/.test(stored.order || "")) return stored;
+    } catch { /* ignore a broken return */ }
+    const match = document.cookie.match(/(?:^|; )f1_retour=([^;]+)/);
+    if (!match) return null;
+    let value = match[1];
+    try { value = decodeURIComponent(value); } catch { /* keep */ }
+    const [order, key] = value.split("|");
+    return /^F1-\d+$/.test(order || "") ? { order, key: key || "" } : null;
   }
 
   async function openPaidReturn(order, key) {
