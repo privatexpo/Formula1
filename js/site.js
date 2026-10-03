@@ -125,7 +125,7 @@
     chn: { ga: ["GA"], main: ["[idGrandstand='10055']"], club: ["[idGrandstand='10035']"], gashangai: ["GA_Shangai"], gs1234242: ["[idGrandstand='1234242']"], gs9965: ["[idGrandstand='9965']"], gs8768689: ["[idGrandstand='8768689']"], gs2627362: ["[idGrandstand='2627362']"] },
     mia: { beach: ["North_Beach"], t18: ["Turn18"], sf: ["Start_Finish"], turn1: ["Turn1"], beachsouth: ["Beach_South"], paddockclub: ["Paddock_Club"], marina: ["Marina"], boathouse: ["Boat_House"], miahospitalityvillagec: ["MIA_Hospitality_Village_Club"] },
     can: { ga: ["GA"], gs12: ["_15"], club: ["Podium_Club"], g16: ["_16"], family: ["family"], g32: ["_32"], eliterestaurant: ["Elite_Restaurant"], vipfanselitesuite: ["VIP_Fan_s_Elite_Suite"], sennaclub: ["Senna_Club"], g1978terrace: ["_1978_Terrace"], latoundra: ["La_Toundra"], privilege: ["Privilege"], g31: ["_31"], g21: ["_21"], stroll: ["Stroll"], g46: ["_46"], g34: ["_34"], main: ["Main"], platinegs: ["Platine_GS"], g47: ["_47"], cgvterrace: ["CGV_terrace"], g1: ["_1"], cgvexperience: ["CGV_Experience"], privilege17: ["Privilege_17"], lajamaque: ["La_Jama\u00efque"], terrace21: ["Terrace_21"], cosmosclub: ["Cosmos_club"] },
-    mon: { rocher: ["O"], k: ["K"], club: ["Paddock_Club"], ga: ["GA"], romaitalianrivieraloun: ["Roma_Italian_Riviera_Lounge"], l: ["L"], v1: ["V1"], x2: ["X2"], x1: ["X1"], b: ["B"], c: ["C"], a1: ["A1"], z1: ["Z1"], m: ["M"], n: ["N"], e: ["E"], p: ["P"], t: ["T"], belvedere: ["Belvedere"], terraces: ["terraces"], shangrila: ["shangri-la"], albatros: ["albatros"], hirondele: ["hirondele"], panorama: ["panorama"], caravelle: ["caravelle"], trackside: ["trackside"], ermano: ["ermano"], heracles: ["heracles"], panoramafanclub: ["panorama_fan_club"], bronze: ["bronze"], platiniumheracles: ["platinium_heracles"], silver: ["silver"], platinium: ["platinium"], gold: ["gold"], gs23898: ["[idGrandstand='23898']"], gs11967: ["[idGrandstand='11967']"] },
+    mon: { rocher: ["O"], k: ["K"], club: ["Paddock_Club"], ga: ["GA"], romaitalianrivieraloun: ["Roma_Italian_Riviera_Lounge"], l: ["L"], v1: ["V1"], x2: ["X2"], x1: ["X1"], b: ["B"], c: ["C"], a1: ["A1"], z1: ["Z1"], m: ["M"], n: ["N"], e: ["E"], p: ["P"], t: ["T"], belvedere: ["Belvedere"], terraces: ["terraces"], shangrila: ["shangri-la"], albatros: ["albatros"], hirondele: ["hirondele"], panorama: ["panorama"], caravelle: ["caravelle"], trackside: ["trackside"], ermano: ["ermano"], heracles: ["heracles"], panoramafanclub: ["panorama_fan_club"], bronze: ["bronze"], platiniumheracles: ["platinium_heracles"], silver: ["silver"], platinium: ["platinium"], gold: ["gold"], gs23898: ["V1-2", "[idGrandstand='23898']"], gs11967: ["[idGrandstand='11967']"] },
     por: { ga: ["ga"], main: ["main"], club: ["club"] },
     gbr: { ga: ["GA"], chapel: ["[idGrandstand='18207']"], hamilton: ["[idGrandstand='8375']"], gasilverstone: ["GA_Silverstone"], redbullpoleposition: ["Red_bull_pole_position"], gs25308: ["[idGrandstand='25308']"], gs25318: ["[idGrandstand='25318']"], gs25328: ["[idGrandstand='25328']"], gs25338: ["[idGrandstand='25338']"], gs25348: ["[idGrandstand='25348']"], gs27179: ["[idGrandstand='27179']"], gs27239: ["[idGrandstand='27239']"], gs27279: ["[idGrandstand='27279']"], gs27289: ["[idGrandstand='27289']"], gs27299: ["[idGrandstand='27299']"], gs27309: ["[idGrandstand='27309']"], gs27319: ["[idGrandstand='27319']"], gs27329: ["[idGrandstand='27329']"], gs8205: ["[idGrandstand='8205']"], gs8225: ["[idGrandstand='8225']"], gs8265: ["[idGrandstand='8265']"], gs8275: ["[idGrandstand='8275']"], gs8285: ["[idGrandstand='8285']"], gs8315: ["[idGrandstand='8315']"], gs8325: ["[idGrandstand='8325']"], gs8365: ["[idGrandstand='8365']"], gs8385: ["[idGrandstand='8385']"], gs8395: ["[idGrandstand='8395']"], gs8405: ["[idGrandstand='8405']"], gs8415: ["[idGrandstand='8415']"] },
     aut: { ga: ["GA"], jk: ["t9", "t10"], sz: ["[idGrandstand='9355']"], gs17417: ["[idGrandstand='17417']"], gs9375: ["[idGrandstand='9375']"], gs9345: ["[idGrandstand='9345']"], gs9315: ["[idGrandstand='9315']"], gs9325: ["[idGrandstand='9325']"], gs9335: ["[idGrandstand='9335']"] },
@@ -589,6 +589,8 @@
       if (key.startsWith("@")) return;
       const found = key.startsWith("[") ? svg.querySelectorAll(key) : svg.querySelectorAll(`[id="${key}"]`);
       found.forEach((node) => nodes.push(node));
+      const attr = key.match(/^\[idGrandstand='([^']+)'\]$/i);
+      if (attr) svg.querySelectorAll(`[idgrandstand="${attr[1]}"]`).forEach((node) => nodes.push(node));
     });
     return nodes;
   }
@@ -602,7 +604,14 @@
     canvas.querySelectorAll(".is-spot").forEach((node) => node.classList.remove("is-spot"));
     canvas.querySelector(".map-dot")?.remove();
     const caption = host.querySelector(".map-caption");
-    if (caption) caption.textContent = ticket.name;
+    if (caption) {
+      caption.textContent = ticket.name;
+      caption.classList.remove("is-at-pin");
+      caption.style.left = "";
+      caption.style.top = "";
+      caption.style.bottom = "";
+      caption.style.transform = "";
+    }
     const keys = (seatSpot[race.id] || {})[ticket.id] || [];
     const nodes = spotNodes(svg, keys);
     nodes.forEach((node) => node.classList.add("is-spot"));
@@ -610,6 +619,7 @@
     const svgRect = svg.getBoundingClientRect();
     let x;
     let y;
+    let small = false;
     const pinKey = keys.find((key) => key.startsWith("@"));
     if (pinKey) {
       const [px, py] = pinKey.slice(1).split(",").map(Number);
@@ -628,15 +638,24 @@
         },
         { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity }
       );
+      small = box.right - box.left < 28 && box.bottom - box.top < 28;
       x = (box.left + box.right) / 2 - hostRect.left;
       y = (box.top + box.bottom) / 2 - hostRect.top;
     }
     if (x == null) return;
     const dot = document.createElement("span");
-    dot.className = "map-dot";
+    dot.className = small ? "map-dot is-pin" : "map-dot";
     dot.style.left = `${x}px`;
     dot.style.top = `${y}px`;
     canvas.appendChild(dot);
+    if (small && caption) {
+      caption.classList.add("is-at-pin");
+      const placeLeft = x > hostRect.width * 0.62;
+      caption.style.left = `${x}px`;
+      caption.style.top = `${y}px`;
+      caption.style.bottom = "auto";
+      caption.style.transform = placeLeft ? "translate(calc(-100% - 18px), -50%)" : "translate(18px, -50%)";
+    }
   }
 
   function mountMap(race) {

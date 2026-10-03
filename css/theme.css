@@ -1706,13 +1706,23 @@ body[data-page="faq"] .page-intro { text-align: center; }
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+.map-dot.is-pin {
+  z-index: 3;
+  width: 22px;
+  height: 22px;
+  border-width: 4px;
+  box-shadow: 0 0 0 10px rgba(225, 6, 0, 0.28);
+}
+.map-caption.is-at-pin { z-index: 3; bottom: auto; }
 .buy__map svg .is-spot,
 .buy__map svg .is-spot path,
 .buy__map svg .is-spot polygon,
 .buy__map svg .is-spot rect,
 .buy__map svg .is-spot circle {
   fill: #e10600 !important;
-  stroke: #9b0500;
+  stroke: #e10600 !important;
+  stroke-width: 4px;
+  vector-effect: non-scaling-stroke;
 }
 .opt__sold { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; display: inline-block; margin: 0; color: #9a9aa2; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
 .tier-list { display: grid; gap: 12px; margin-top: 20px; }
