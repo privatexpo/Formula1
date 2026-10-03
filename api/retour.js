@@ -16,6 +16,6 @@ module.exports = async function handler(req, res) {
     res.status(400).json({ ok: false });
     return;
   }
-  const result = await confirmPaid(match[1], "", "");
+  const result = await confirmPaid(match[1], "", "", String(body.key || ""));
   res.status(result.ok ? 200 : 422).json(result);
 };

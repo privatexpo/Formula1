@@ -1,4 +1,5 @@
 const mail = require("./mail");
+const booking = require("./booking");
 
 function wooAuth() {
   const base = (process.env.WC_URL || process.env.WOOCOMMERCE_URL || "").replace(/\/$/, "");
@@ -131,57 +132,87 @@ async function emailFromByteqs(checkoutUrl, reference) {
   return { email, tried };
 }
 
-async function confirmPaid(id, hintedEmail, langHint) {
+async function confirmPaid(id, hintedEmail, langHint, orderKey) {
   const order = await woo(`/orders/${id}`);
   if (!order) return { ok: false, reason: "order" };
+  if (orderKey && order.order_key && order.order_key !== orderKey) return { ok: false, reason: "order" };
   if (order.status === "cancelled" || order.status === "refunded") return { ok: false, reason: "status" };
-  if (metaValue(order, "_f1_mail") === "sent") return { ok: true, already: true };
 
   let email = String(hintedEmail || order.billing?.email || "").trim().toLowerCase();
   if (!email.includes("@")) {
     const looked = await emailFromByteqs(metaValue(order, "_byteqs_checkout_url"), metaValue(order, "_byteqs_reference") || `F1-${id}`);
     email = looked.email || "";
   }
-  if (!email.includes("@")) return { ok: false, reason: "email" };
+  let code = metaValue(order, "_f1_code");
+  const alreadyMailed = metaValue(order, "_f1_mail") === "sent";
+  const billing = { ...(order.billing || {}) };
+  if (email.includes("@")) billing.email = email;
+  if (!code) {
+    code = mail.password();
+    await woo(`/orders/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        status: "processing",
+        set_paid: true,
+        payment_method: "byteqs",
+        payment_method_title: "BYTEQS",
+        billing,
+        meta_data: [
+          { key: "_f1_access", value: mail.hash(code) },
+          { key: "_f1_code", value: code },
+          { key: "_byteqs_status", value: "paid" },
+        ],
+      }),
+    });
+  } else if (order.status === "pending" || order.status === "on-hold" || order.status === "failed") {
+    await woo(`/orders/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        status: "processing",
+        set_paid: true,
+        payment_method: "byteqs",
+        payment_method_title: "BYTEQS",
+        billing,
+        meta_data: [{ key: "_byteqs_status", value: "paid" }],
+      }),
+    });
+  }
 
-  const code = mail.password();
-  const saved = await woo(`/orders/${id}`, {
-    method: "PUT",
-    body: JSON.stringify({
-      status: "processing",
-      set_paid: true,
-      payment_method: "byteqs",
-      payment_method_title: "BYTEQS",
-      billing: { ...(order.billing || {}), email },
-      meta_data: [
-        { key: "_f1_access", value: mail.hash(code) },
-        { key: "_f1_mail", value: "pending" },
-        { key: "_byteqs_status", value: "paid" },
-      ],
-    }),
-  });
-  const source = saved || order;
-  const fees = Array.isArray(source.fee_lines) ? source.fee_lines : [];
-  const items = Array.isArray(source.line_items) ? source.line_items : [];
-  const lines = (fees.length ? fees : items).map((line) => ({
-    name: String(line.name || "Ticket"),
-    qty: Number(line.quantity || 1),
-  }));
-  const stored = (source.meta_data || []).find((item) => item.key === "_f1_lang");
-  const sent = await mail.send({
-    to: email,
-    reference: `F1-${id}`,
+  let mailed = alreadyMailed;
+  if (email.includes("@") && !alreadyMailed) {
+    const source = (await woo(`/orders/${id}`)) || order;
+    const fees = Array.isArray(source.fee_lines) ? source.fee_lines : [];
+    const items = Array.isArray(source.line_items) ? source.line_items : [];
+    const lines = (fees.length ? fees : items).map((line) => ({
+      name: String(line.name || "Ticket"),
+      qty: Number(line.quantity || 1),
+    }));
+    const stored = (source.meta_data || []).find((item) => item.key === "_f1_lang");
+    const sent = await mail.send({
+      to: email,
+      reference: `F1-${id}`,
+      password: code,
+      lines,
+      total: source.total ? `${source.total} ${source.currency || "EUR"}` : "",
+      lang: (stored && stored.value) || langHint || metaValue(order, "_f1_lang") || "en",
+    });
+    mailed = Boolean(sent.ok);
+    if (mailed) {
+      await woo(`/orders/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ meta_data: [{ key: "_f1_mail", value: "sent" }] }),
+      });
+    }
+  }
+
+  const fresh = (await woo(`/orders/${id}`)) || order;
+  return {
+    ok: true,
     password: code,
-    lines,
-    total: source.total ? `${source.total} ${source.currency || "EUR"}` : "",
-    lang: (stored && stored.value) || langHint || metaValue(order, "_f1_lang") || "en",
-  });
-  if (!sent.ok) return { ok: false, reason: "brevo", status: sent.status };
-  await woo(`/orders/${id}`, {
-    method: "PUT",
-    body: JSON.stringify({ meta_data: [{ key: "_f1_mail", value: "sent" }] }),
-  });
-  return { ok: true };
+    email: email.includes("@") ? email : "",
+    mailed,
+    booking: booking.summary(fresh),
+  };
 }
 
 module.exports = { confirmPaid, findEmail: emailIn };

@@ -1100,7 +1100,7 @@
     lead.classList.add("is-account");
     lead.querySelector(".booking-kicker").textContent = t("book.account");
     lead.querySelector("h1").textContent = t("book.yours");
-    lead.querySelector("p:last-of-type").textContent = email;
+    lead.querySelector("p:last-of-type").textContent = email || payload.reference || "";
     const cards = tickets.map((ticket, index) => {
       const gate = gates[index];
       const ready = gate.state === "ready" && ticket.code && typeof qrSvg === "function";
@@ -1139,7 +1139,11 @@
       refunded: "status.refunded",
       failed: "status.failed",
     }[payload.status];
+    const access = payload.password
+      ? `<section class="account-card"><p class="booking-kicker">${esc(t("book.password"))}</p><p class="pass__code"><span>${esc(payload.password)}</span></p><p class="pass-note">${esc(t("book.hint"))}</p></section>`
+      : "";
     wallet.innerHTML = `
+      ${access}
       <section class="account-card">
         <div class="account-card__top">
           <div class="account-card__id">
@@ -1205,21 +1209,29 @@
     });
     const params = new URLSearchParams(location.search);
     const saved = savedBooking();
+    const paidOrder = params.get("order") || "";
     if (params.get("demo") === "1") rememberBooking(DEMO_EMAIL, demoOrder());
+    else if (params.get("paid") === "1" && /^F1-\d+$/.test(paidOrder)) openPaidReturn(paidOrder, params.get("key") || "");
     else if (saved) rememberBooking(saved.email, saved.payload);
     if (saved) retrieveForm.email.value = saved.email;
-    if (params.get("paid") === "1") {
-      const order = params.get("order") || "";
-      if (/^F1-\d+$/.test(order)) {
-        fetch("/api/retour", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order }),
-        }).catch(() => {});
-      }
-      const lead = document.getElementById("booking-lead");
-      const copy = lead && lead.querySelector("p:last-of-type");
-      if (copy && params.get("demo") !== "1" && !saved) copy.textContent = t("book.paidNote");
+  }
+
+  async function openPaidReturn(order, key) {
+    const result = document.querySelector("[data-retrieve-result]");
+    if (result) result.textContent = t("book.looking");
+    try {
+      const response = await fetch("/api/retour", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order, key }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.booking) throw new Error(t("book.paidNote"));
+      const view = payload.booking;
+      if (payload.password) view.password = payload.password;
+      rememberBooking(payload.email || "", view);
+    } catch {
+      if (result) result.textContent = t("book.paidNote");
     }
   }
 

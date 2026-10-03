@@ -136,7 +136,28 @@ function ticketsOf(order) {
   return tickets;
 }
 
-module.exports = async function handler(req, res) {
+function summary(order) {
+  const amount = Number(order.total);
+  const total = Number.isFinite(amount)
+    ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: order.currency || "EUR" }).format(amount)
+    : String(order.total || "");
+  const placedRaw = order.date_created || order.date_created_gmt;
+  const placedDate = placedRaw ? new Date(placedRaw) : null;
+  const placed = placedDate && !Number.isNaN(placedDate.getTime())
+    ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(placedDate)
+    : "";
+  return {
+    reference: `F1-${order.id}`,
+    status: order.status,
+    statusLabel: STATUS[order.status] || "Booking found",
+    total,
+    placed,
+    lines: linesOf(order),
+    tickets: ticketsOf(order),
+  };
+}
+
+async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "POST only" });
     return;
@@ -167,25 +188,11 @@ module.exports = async function handler(req, res) {
       res.status(404).json(missing);
       return;
     }
-    const amount = Number(order.total);
-    const total = Number.isFinite(amount)
-      ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: order.currency || "EUR" }).format(amount)
-      : String(order.total || "");
-    const placedRaw = order.date_created || order.date_created_gmt;
-    const placedDate = placedRaw ? new Date(placedRaw) : null;
-    const placed = placedDate && !Number.isNaN(placedDate.getTime())
-      ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(placedDate)
-      : "";
-    res.status(200).json({
-      reference: `F1-${order.id}`,
-      status: order.status,
-      statusLabel: STATUS[order.status] || "Booking found",
-      total,
-      placed,
-      lines: linesOf(order),
-      tickets: ticketsOf(order),
-    });
+    res.status(200).json(summary(order));
   } catch {
     res.status(404).json(missing);
   }
-};
+}
+
+module.exports = handler;
+module.exports.summary = summary;
