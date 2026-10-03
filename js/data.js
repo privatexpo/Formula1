@@ -1,8 +1,5 @@
 window.APEX = {
   races: [
-    { id: "test", season: 2027, round: 0, country: "Test", name: "TEST PAIEMENT", circuit: "Paiement de test", dates: "1 €", raceDate: "2026-10-04", region: "europe", tickets: [
-      { id: "test", name: "TEST PAIEMENT", kind: "seat", price: 1 },
-    ] },
     { id: "bhr", season: 2027, round: 1, country: "Bahrain", name: "Gulf Air Bahrain Grand Prix", circuit: "Bahrain International Circuit", dates: "12 – 14 Mar", raceDate: "2027-03-14", region: "middle-east", tickets: [
       { id: "ga", name: "General admission", kind: "seat", price: 141 },
       { id: "main", name: "Main Grandstand", kind: "seat", price: 364 },
