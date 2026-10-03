@@ -409,6 +409,7 @@
             <div class="basket-total"><dt>${t("basket.total")}</dt><dd>${cartTotalLabel()}</dd></div>
           </dl>
           <form id="checkout-form">
+            <label class="basket-email">${t("contact.email")}<input name="email" type="email" required autocomplete="email"></label>
             <button class="button" type="submit">${t("basket.place")}</button>
             <p class="basket-legal">${t("basket.legal")}</p>
           </form>
@@ -970,6 +971,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lang: window.I18N ? I18N.lang : "en",
+          email: String(new FormData(form).get("email") || "").trim(),
           items: cart.map((item) => ({ raceId: item.raceId, tierId: item.tierId, qty: item.qty })),
         }),
       });

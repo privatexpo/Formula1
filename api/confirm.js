@@ -33,21 +33,51 @@ function metaValue(order, key) {
 }
 
 function emailIn(value, depth = 0) {
-  if (depth > 5 || !value || typeof value !== "object") return "";
+  if (depth > 8 || value == null) return "";
+  if (typeof value === "string") {
+    const match = value.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+    if (!match) return "";
+    const email = match[0].trim().toLowerCase();
+    return email.startsWith("attente@") ? "" : email;
+  }
   if (Array.isArray(value)) {
-    for (const item of value.slice(0, 8)) {
+    for (const item of value.slice(0, 40)) {
       const found = emailIn(item, depth + 1);
       if (found) return found;
     }
     return "";
   }
-  for (const key of ["email", "customer_email", "customerEmail", "receipt_email", "receiptEmail"]) {
-    const candidate = value[key];
-    if (typeof candidate === "string" && candidate.includes("@")) return candidate.trim().toLowerCase();
-  }
-  for (const key of ["customer_details", "customer", "billing_details", "billing", "payer", "object", "data", "checkout", "payment"]) {
+  if (typeof value !== "object") return "";
+  const preferred = ["email", "customer_email", "customerEmail", "receipt_email", "receiptEmail"];
+  for (const key of preferred) {
     if (!(key in value)) continue;
     const found = emailIn(value[key], depth + 1);
+    if (found) return found;
+  }
+  for (const [key, item] of Object.entries(value)) {
+    if (preferred.includes(key)) continue;
+    const found = emailIn(item, depth + 1);
+    if (found) return found;
+  }
+  return "";
+}
+
+function findRef(value, depth = 0) {
+  if (depth > 8 || value == null) return "";
+  if (typeof value === "string") {
+    const match = value.match(/F1-\d+/);
+    return match ? match[0] : "";
+  }
+  if (Array.isArray(value)) {
+    for (const item of value.slice(0, 40)) {
+      const found = findRef(item, depth + 1);
+      if (found) return found;
+    }
+    return "";
+  }
+  if (typeof value !== "object") return "";
+  for (const item of Object.values(value)) {
+    const found = findRef(item, depth + 1);
     if (found) return found;
   }
   return "";
@@ -215,4 +245,4 @@ async function confirmPaid(id, hintedEmail, langHint, orderKey) {
   };
 }
 
-module.exports = { confirmPaid, findEmail: emailIn };
+module.exports = { confirmPaid, findEmail: emailIn, findRef };

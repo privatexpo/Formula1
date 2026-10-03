@@ -164,7 +164,7 @@ module.exports = async function handler(req, res) {
     const lang = i18n.normalize(body.lang);
     const email = String(body.email || "").trim().toLowerCase();
     const items = Array.isArray(body.items) ? body.items : [];
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       res.status(400).json({ error: "A valid email is required." });
       return;
     }

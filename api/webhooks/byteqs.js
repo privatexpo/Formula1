@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const { confirmPaid, findEmail } = require("../confirm");
+const { confirmPaid, findEmail, findRef } = require("../confirm");
 
 function readRaw(req) {
   return new Promise((resolve, reject) => {
@@ -73,13 +73,13 @@ async function handler(req, res) {
   const paid = (!/fail|unsuccess|expired|cancel|refund/.test(type) && /succeed|success|completed|paid/.test(type))
     || status === "succeeded" || status === "success" || status === "paid" || status === "completed";
   const wooId = meta.wooId || meta.woo_id || object.wooId || "";
+  const email = findEmail(body) || "";
   const reference = String(
     object.clientReferenceId || object.client_reference_id || object.reference
     || data.clientReferenceId || data.client_reference_id || data.reference
-    || meta.reference || body.clientReferenceId || (wooId ? `F1-${wooId}` : "")
+    || meta.reference || body.clientReferenceId || findRef(body) || (wooId ? `F1-${wooId}` : "")
   );
-  const match = reference.match(/^F1-(\d+)$/);
-  const email = [body, data, object].map((node) => findEmail(node)).find(Boolean) || "";
+  const match = reference.match(/F1-(\d+)/);
   if (paid && match) await confirmPaid(match[1], email, meta.lang || "");
   res.status(200).json({ ok: true });
 }
