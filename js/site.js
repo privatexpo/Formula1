@@ -1108,7 +1108,7 @@
     lead.querySelector("p:last-of-type").textContent = email || payload.reference || "";
     const cards = tickets.map((ticket, index) => {
       const gate = gates[index];
-      const ready = gate.state === "ready" && ticket.code && typeof qrSvg === "function";
+      const ready = Boolean(ticket.code) && ticket.state !== "unpaid" && typeof qrSvg === "function" && typeof barcodeSvg === "function";
       const stub = ready
         ? `<div class="pass__qr">${qrSvg(ticket.code)}</div>`
         : `<div class="pass__wait"><p>${gate.state === "closed" ? t("pass.closed") : gate.state === "unpaid" ? t("pass.after") : t("pass.opens")}</p><strong>${esc(gate.state === "upcoming" ? gate.opens : gate.state === "closed" ? t("pass.finished") : gate.state === "unpaid" ? t("pass.unlock") : "")}</strong></div>`;
@@ -1130,6 +1130,7 @@
             <div><dt>${t("pass.holder")}</dt><dd>${esc(email)}</dd></div>
           </dl>
           <p class="pass__code"><span>${esc(serial)}</span>${check ? `<span>${esc(check)}</span>` : ""}</p>
+          ${ready ? `<div class="pass__barcode">${barcodeSvg(ticket.code)}</div>` : ""}
         </div>
         <div class="pass__stub">${stub}</div>
       </article>`;

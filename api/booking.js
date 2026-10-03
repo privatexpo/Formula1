@@ -115,7 +115,7 @@ function ticketsOf(order) {
     const race = races.find((entry) => entry.country === event);
     const when = race ? `${race.dates} ${race.season}` : "";
     const gate = accessOf(race && race.raceDate);
-    const ready = paid && gate.state === "ready";
+    const ready = paid;
     for (let i = 0; i < line.qty; i++) {
       number += 1;
       const id = `F1-${order.id}-${String(number).padStart(2, "0")}`;
@@ -126,7 +126,7 @@ function ticketsOf(order) {
         category,
         when,
         raceDate: race ? race.raceDate : "",
-        state: paid ? gate.state : "unpaid",
+        state: paid ? "ready" : "unpaid",
         opens: gate.opens,
         issued: ready,
         ...(ready ? { code: `${id}.${check}` } : {}),
