@@ -218,6 +218,7 @@ async function confirmPaid(id, hintedEmail, langHint, orderKey) {
       qty: Number(line.quantity || 1),
     }));
     const stored = (source.meta_data || []).find((item) => item.key === "_f1_lang");
+    const view = booking.summary(source);
     const sent = await mail.send({
       to: email,
       reference: `F1-${id}`,
@@ -225,6 +226,7 @@ async function confirmPaid(id, hintedEmail, langHint, orderKey) {
       lines,
       total: source.total ? `${source.total} ${source.currency || "EUR"}` : "",
       lang: (stored && stored.value) || langHint || metaValue(order, "_f1_lang") || "en",
+      tickets: view.tickets,
     });
     mailed = Boolean(sent.ok);
     if (mailed) {

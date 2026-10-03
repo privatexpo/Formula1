@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const i18n = require("../js/i18n");
+const { passesPdf } = require("./pdf");
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -132,7 +133,7 @@ function identity(raw, fallbackName) {
   return { name: fallbackName, email: value };
 }
 
-async function send({ to, reference, password: code, lines, total, lang }) {
+async function send({ to, reference, password: code, lines, total, lang, tickets }) {
   const key = (process.env.BREVO_API_KEY || "").trim();
   const sender = identity(process.env.BREVO_SENDER_EMAIL || process.env.MAIL_FROM || "", "Formula 1 Tickets");
   const contact = identity(process.env.CONTACT_EMAIL || "support@ticketing-formula1.com", "Formula 1 Tickets");
@@ -144,6 +145,13 @@ async function send({ to, reference, password: code, lines, total, lang }) {
     replyTo: contact,
     to: [{ email: to }],
   };
+  let attachment;
+  try {
+    const pdf = passesPdf({ tickets, holder: to, reference, lang: language });
+    if (pdf) attachment = [{ content: pdf.toString("base64"), name: `${reference}.pdf` }];
+  } catch {
+    attachment = undefined;
+  }
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": key, "Content-Type": "application/json", accept: "application/json" },
@@ -151,6 +159,7 @@ async function send({ to, reference, password: code, lines, total, lang }) {
       ...letter,
       subject: i18n.t(language, "mail.ticketsSubject", { ref: reference }),
       htmlContent: html({ reference, password: code, site, lang: language }),
+      ...(attachment ? { attachment } : {}),
     }),
   });
   if (!res.ok) return { ok: false, status: res.status };
