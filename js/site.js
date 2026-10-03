@@ -680,13 +680,14 @@
       .catch(() => {});
   }
 
-  function pickSpot(tierId) {
+  function pickSpot(tierId, reveal) {
     selectedTier = tierId;
     document.querySelectorAll(".opt").forEach((el) => el.classList.toggle("is-on", el.dataset.tier === selectedTier));
     const race = races.find((entry) => entry.id === selectedId);
     if (race) showSpot(race);
-    if (window.matchMedia("(max-width: 860px)").matches) {
-      document.querySelector(".buy__map")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const narrow = window.matchMedia("(max-width: 860px)").matches;
+    if (reveal || narrow) {
+      document.querySelector(".buy__map")?.scrollIntoView({ behavior: "smooth", block: narrow ? "start" : "nearest" });
     }
   }
 
@@ -732,9 +733,9 @@
           <img class="buy__flag" src="assets/flags/${flags[race.country] || "bahrain.svg"}" alt="">
           <div class="buy__id">
             <h2 class="buy__title">${race.country}</h2>
-            <p>${race.dates} · ${t("buy.weekend")}</p>
+            <p>${race.dates}</p>
           </div>
-          <p class="buy__from"><span>${t("buy.from")}</span><b>${euro(fromPrice(race))}</b></p>
+          <p class="buy__from"><span>${t("buy.from")}</span><b>${euro(fromPrice(race))}</b><em>${t("buy.days")}</em></p>
         </div>
         <div class="buy__grid">
           <div class="buy__list">
@@ -747,13 +748,20 @@
                 (ticket) => `
               <article class="opt${ticket.sold ? " is-sold" : ""}${ticket.id === selectedTier ? " is-on" : ""}" data-tier="${ticket.id}">
                 <h4>${ticket.name}</h4>
-                <p class="opt__when">${t("buy.days")}</p>
                 ${
                   ticket.sold
                     ? `<span class="opt__sold">${t("buy.soldOut")}</span>`
-                    : `<b class="opt__price">${euro(ticket.price)}</b>
-                <button class="button buy-go" type="button" data-action="book" data-race="${race.id}" data-tier="${ticket.id}">${t("buy.select")}</button>`
+                    : `<b class="opt__price">${euro(ticket.price)}</b>`
                 }
+                <p class="opt__when">${t("buy.days")}</p>
+                <div class="opt__actions">
+                  <button class="opt__spot" type="button">${t("buy.spot")}</button>
+                  ${
+                    ticket.sold
+                      ? ""
+                      : `<button class="button buy-go" type="button" data-action="book" data-race="${race.id}" data-tier="${ticket.id}">${t("buy.select")}</button>`
+                  }
+                </div>
               </article>`
               )
               .join("")}
@@ -816,7 +824,7 @@
     if (!event.target.closest(".account-menu")) closeAccount();
     if (!event.target.closest(".lang-menu")) closeLang();
     const card = event.target.closest(".opt");
-    if (card && !event.target.closest(".buy-go")) pickSpot(card.dataset.tier);
+    if (card && !event.target.closest(".buy-go")) pickSpot(card.dataset.tier, Boolean(event.target.closest(".opt__spot")));
     const button = event.target.closest("[data-action]");
     if (!button) return;
     const action = button.dataset.action;
